@@ -25,15 +25,21 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
             match fs::read_to_string(path) {
                 Ok(contents) => match serde_json::from_str::<Transaction>(&contents) {
                     Ok(transaction) => {
-                        let (result, mut serialised_tx, mut serialised_wtx, tx_weight, fees) =
+                        let (result, serialised_tx, serialised_wtx, tx_weight, fees) =
                             serialise_tx(&transaction)?;
 
                         if result == true {
-                            serialised_tx.reverse();
-                            serialised_wtx.reverse();
 
-                            let txid = hex::encode(double_sha256(&serialised_tx));
-                            let wtxid = hex::encode(double_sha256(&serialised_wtx));
+                            let mut txid = double_sha256(&serialised_tx);
+                            let mut wtxid = double_sha256(&serialised_wtx);
+
+                            txid.reverse();
+                            wtxid.reverse();
+
+                            let txid = hex::encode(txid);
+                            let wtxid = hex::encode(wtxid);
+
+
 
                             // Find the correct position to insert the transaction based on its fees
                             let position = map
@@ -297,6 +303,21 @@ mod test {
             total_weight += weight;
         }
         println!("{}", total_weight);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test5() -> Result<()> {
+        let v_mempool_dir = "./valid-mempool";
+
+        for entry in WalkDir::new(v_mempool_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let path = entry.path();
+            println!("{}", path.display().to_string());
+        }
 
         Ok(())
     }

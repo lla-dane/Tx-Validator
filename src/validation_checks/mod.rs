@@ -1,4 +1,4 @@
-use std::fs;
+use std::{collections::HashMap, fs, path::Path};
 
 use ripemd::Ripemd160;
 use secp256k1::{ecdsa::Signature, Message, PublicKey, Secp256k1};
@@ -681,6 +681,70 @@ fn gas_fees_check(tx: &Transaction) -> bool {
     } else {
         return true;
     }
+}
+
+pub fn all_transaction_verification() -> Result<()> {
+    let mut s_count = 0;
+    let mut f_count = 0;
+    let mut d_spends = 0;
+    let mempool_dir = "./mempool";
+    let mut spends: HashMap<String, String> = HashMap::new();
+    'outer: for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
+        let path = entry.path();
+        if path.is_file() {
+            match fs::read_to_string(path) {
+                Ok(contents) => {
+                    match serde_json::from_str::<Transaction>(&contents) {
+                        Ok(transaction) => {
+                            // Check if all inputs' prevout scriptpubkey_type are .p2sh
+                            let all_p2sh = transaction.vin.iter().all(|input| true);
+                            if all_p2sh {
+                                for input in &transaction.vin {
+                                    let input_key = format!("{}{}", input.txid, input.vout);
+                                    match spends.get(&input_key) {
+                                        Some(existing_txid)
+                                            if path.display().to_string() != *existing_txid =>
+                                        {
+                                            d_spends += 1;
+                                            continue 'outer;
+                                        }
+                                        _ => {
+                                            spends.insert(input_key, path.display().to_string());
+                                        }
+                                    }
+                                }
+
+                                let result = verify_tx(transaction)?;
+
+                                if result == true {
+                                    s_count += 1;
+                                    if let Some(filename) = path.file_name() {
+                                        let valid_mempool_dir = Path::new("./valid-mempool");
+                                        let destination_path = valid_mempool_dir.join(filename);
+                                        fs::copy(&path, &destination_path)?;
+                                    }
+                                } else {
+                                    f_count += 1;
+                                }
+
+                                println!("\n\n");
+                            }
+                        }
+                        Err(e) => {
+                            println!("Failed to parse JSON: {}", e);
+                        }
+                    }
+                }
+                Err(e) => eprintln!("Failed to read file: {}", e),
+            }
+        }
+    }
+
+    println!("success: {}", s_count);
+    println!("failure: {}", f_count);
+    println!("doubles: {}", d_spends);
+
+    Ok(())
 }
 
 #[cfg(test)]

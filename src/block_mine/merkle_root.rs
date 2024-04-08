@@ -1,15 +1,19 @@
 use crate::{error::Result, tx};
-use std::{collections::HashMap, fmt::format, slice::Windows};
+use std::{collections::HashMap, fmt::format, fs::File, io::Write, slice::Windows};
 
 use crate::transaction::Transaction;
 
 use super::serialise_tx::{create_txid_tx_map, double_sha256};
 
-pub fn generate_rootss(map: Vec<(String, Transaction, String, usize, u64)>) -> Result<()> {
+pub fn generate_roots(
+    map: Vec<(String, Transaction, String, usize, u64)>,
+) -> Result<(String, String, String)> {
     let tx_weight_limit = 3000000;
     let mut current_tx_weight = 0;
     let mut txid_vec: Vec<String> = Vec::new();
+    let mut txid_le_vec: Vec<String> = Vec::new();
     let mut wtxid_vec: Vec<String> = Vec::new();
+    let mut block_subsidy = 0;
 
     wtxid_vec.push("0000000000000000000000000000000000000000000000000000000000000000".to_string());
 
@@ -18,6 +22,9 @@ pub fn generate_rootss(map: Vec<(String, Transaction, String, usize, u64)>) -> R
             break;
         }
         current_tx_weight += weight;
+        block_subsidy += fees;
+
+        txid_le_vec.push(txid.clone());
 
         let mut txid_reversed_bytes = hex::decode(txid)?;
         txid_reversed_bytes.reverse();
@@ -33,14 +40,15 @@ pub fn generate_rootss(map: Vec<(String, Transaction, String, usize, u64)>) -> R
 
     let witness_root_hash = merkel_root(wtxid_vec)?;
 
-    let coinbase_tx = create_coinbase(witness_root_hash)?;
-    let coinbase_txid = hex::encode(double_sha256(&hex::decode(&coinbase_tx)?));
+    let (coinbase_tx, txid_coinbase_tx) = create_coinbase(witness_root_hash, block_subsidy)?;
 
-    txid_vec.insert(0, coinbase_txid);
+    let coinbase_txid = hex::encode(double_sha256(&hex::decode(&txid_coinbase_tx)?));
+
+    txid_vec.insert(0, coinbase_txid.clone());
 
     let merkel_root = merkel_root(txid_vec)?;
 
-    Ok(())
+    Ok((merkel_root, coinbase_tx, coinbase_txid))
 }
 
 fn merkel_root(txids: Vec<String>) -> Result<String> {
@@ -68,7 +76,7 @@ fn merkel_root(txids: Vec<String>) -> Result<String> {
     merkel_root(result)
 }
 
-pub fn create_coinbase(witness_root_hash: String) -> Result<String> {
+pub fn create_coinbase(witness_root_hash: String, block_subsidy: u64) -> Result<(String, String)> {
     /*
     VERSION
     INPUT COUNT:
@@ -107,6 +115,9 @@ pub fn create_coinbase(witness_root_hash: String) -> Result<String> {
      */
 
     let mut coinbase_tx = String::new();
+    let mut txid_coinbase_tx = String::new();
+
+    let block_amount = 650082296 + block_subsidy;
 
     let witness_reserved_value =
         "0000000000000000000000000000000000000000000000000000000000000000".to_string();
@@ -118,24 +129,27 @@ pub fn create_coinbase(witness_root_hash: String) -> Result<String> {
 
     // VERSION MARKER FLAG
     coinbase_tx.push_str("01000000");
+    txid_coinbase_tx.push_str("01000000");
+
     coinbase_tx.push_str("0001");
 
     // INPUT COUNT
     coinbase_tx.push_str("01");
+    txid_coinbase_tx.push_str("01");
 
     // INPUT
     coinbase_tx.push_str("0000000000000000000000000000000000000000000000000000000000000000");
     coinbase_tx.push_str("ffffffff");
     coinbase_tx.push_str("25");
     coinbase_tx
-        .push_str("03233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100");
+        .push_str("03a0bb0d184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100");
     coinbase_tx.push_str("ffffffff");
 
     // OUTPUT COUNT
     coinbase_tx.push_str("02");
 
     // OUTPUT
-    coinbase_tx.push_str("f595814a00000000");
+    coinbase_tx.push_str(&hex::encode(block_amount.to_le_bytes()));
     coinbase_tx.push_str("19");
     coinbase_tx.push_str("76a914edf10a7fac6b32e24daa5305c723f3de58db1bc888ac");
 
@@ -143,55 +157,54 @@ pub fn create_coinbase(witness_root_hash: String) -> Result<String> {
     coinbase_tx.push_str("26");
     coinbase_tx.push_str(&wtxid_commitment);
 
+    // ------------------TXID--------------------------
+
+    // INPUT
+    txid_coinbase_tx.push_str("0000000000000000000000000000000000000000000000000000000000000000");
+    txid_coinbase_tx.push_str("ffffffff");
+    txid_coinbase_tx.push_str("25");
+    txid_coinbase_tx
+        .push_str("03a0bb0d184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100");
+    txid_coinbase_tx.push_str("ffffffff");
+
+    // OUTPUT COUNT
+    txid_coinbase_tx.push_str("02");
+
+    // OUTPUT
+    txid_coinbase_tx.push_str(&hex::encode(block_amount.to_le_bytes()));
+    txid_coinbase_tx.push_str("19");
+    txid_coinbase_tx.push_str("76a914edf10a7fac6b32e24daa5305c723f3de58db1bc888ac");
+
+    txid_coinbase_tx.push_str("0000000000000000");
+    txid_coinbase_tx.push_str("26");
+    txid_coinbase_tx.push_str(&wtxid_commitment);
+
+    // -----------------TXID----------------------------
+
     // WITNESS
     coinbase_tx.push_str("01");
     coinbase_tx.push_str("20");
     coinbase_tx.push_str("0000000000000000000000000000000000000000000000000000000000000000");
 
     coinbase_tx.push_str("00000000");
+    txid_coinbase_tx.push_str("00000000");
 
-    Ok(coinbase_tx)
+    Ok((coinbase_tx, txid_coinbase_tx))
 }
 
 #[cfg(test)]
 
 mod test {
+    use crate::validation_checks::double_sha256;
+
     use super::*;
 
     #[test]
-    fn coinbae_test() -> Result<()> {
-        let result = create_coinbase(
-            "f12d56f2234e809129dbf59392961bbe7a89b6250651f6aea7852cc00ced63ff".to_string(),
-        )?;
-
-        println!("{}", result);
-
-        Ok(())
-    }
-
-    #[test]
     fn merkel_test() -> Result<()> {
-        let txids = vec![
-            "8c14f0db3df150123e6f3dbbf30f8b955a8249b62ac1d1ff16284aefa3d06d87".to_string(),
-            "fff2525b8931402dd09222c50775608f75787bd2b87e56995a7bdd30f79702c4".to_string(),
-            "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4".to_string(),
-            "e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d".to_string(),
-        ];
+        let tx = "010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2503233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff02f595814a000000001976a914edf10a7fac6b32e24daa5305c723f3de58db1bc888ac0000000000000000266a24aa21a9ed52484daa9558fd003c94c61c410ff8eddf264f896a0f46c3b661ff2b30cfbd9c0120000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
+        let txid = hex::encode(double_sha256(&hex::decode(&tx)?));
 
-        let mut txids_natural = Vec::new();
-
-        for txid in txids {
-            let mut txid_natural_bytes = hex::decode(txid)?;
-            txid_natural_bytes.reverse();
-
-            let txid_natural_hex = hex::encode(txid_natural_bytes);
-
-            txids_natural.push(txid_natural_hex);
-        }
-
-        let result = merkel_root(txids_natural)?;
-
-        println!("{}", result);
+        println!("{}", txid);
 
         Ok(())
     }

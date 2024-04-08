@@ -5,4 +5,5 @@ use crate::{
 
 pub mod serialise_tx;
 pub mod merkle_root;
+pub mod block;
 
