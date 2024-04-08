@@ -12,24 +12,6 @@ pub fn double_sha256(data: &[u8]) -> Vec<u8> {
     Sha256::digest(&Sha256::digest(data)).to_vec()
 }
 
-fn clear_directory<P: AsRef<Path>>(path: P) -> Result<()> {
-    let entries = fs::read_dir(path.as_ref())?;
-    for entry in entries {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_dir() {
-            // Recursively clear the directory
-            clear_directory(&path)?;
-            // Remove the directory itself after clearing its contents
-            fs::remove_dir(&path)?;
-        } else {
-            // It's a file, so remove it
-            fs::remove_file(&path)?;
-        }
-    }
-    Ok(())
-}
-
 pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u64)>> {
     // let path = Path::new("./valid-mempool");
     // clear_directory(path)?;
