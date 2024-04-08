@@ -15,7 +15,7 @@ pub fn input_verification_p2pkh(tx: Transaction, tx_input_index: usize) -> Resul
     let scriptsig_asm = match tx.vin[tx_input_index].scriptsig_asm.clone() {
         Some(value) => value,
         None => {
-            println!("scriptsig_asm missing...!!");
+            // println!("scriptsig_asm missing...!!");
             return Ok(false);
         }
     };
@@ -75,7 +75,7 @@ fn script_execution(
                     let b = stack.pop().expect("STACK UNDERFLOW: OP_EQUALVERIFY");
 
                     if a != b {
-                        println!("OP_EQUALVERIFY: FAILED");
+                        // println!("OP_EQUALVERIFY: FAILED");
                         return false;
                     }
                 } else if *op_code == "OP_CHECKSIG" {
@@ -85,14 +85,14 @@ fn script_execution(
                     if result == true {
                         continue;
                     } else {
-                        println!("OP_CHECKSIG: FAILED");
+                        // println!("OP_CHECKSIG: FAILED");
                         return false;
                     }
                 }
             }
         }
     }
-    println!("SCRIPT EXECUTION: SUCCESSFULL");
+    // println!("SCRIPT EXECUTION: SUCCESSFULL");
     true
 }
 

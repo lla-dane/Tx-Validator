@@ -58,11 +58,11 @@ pub fn load_mempool_transactions() -> Result<(Vec<Transaction>)> {
                             txs.push(transaction);
                         }
                         Err(e) => {
-                            eprintln!("Failed to parse JSON: {}", e);
+                            // eprintln!("Failed to parse JSON: {}", e);
                         }
                     }
                 }
-                Err(e) => eprintln!("Failed to read file: {}", e),
+                Err(e) => {}
             }
         }
     }

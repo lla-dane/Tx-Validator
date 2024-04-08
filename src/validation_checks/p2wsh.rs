@@ -57,12 +57,12 @@ fn script_execution_p2wsh(
     let witnness_script_hash = single_sha256(&witness_script_bytes);
 
     if witnness_script_hash != witness_program_bytes {
-        println!("SCRIPTPUBKEY: FAILED");
+        // println!("SCRIPTPUBKEY: FAILED");
 
         return Ok(false);
     }
 
-    println!("SCRIPTPUBKEY: SUCCESSFULL");
+    // println!("SCRIPTPUBKEY: SUCCESSFULL");
 
     let mut index = 0;
 
@@ -340,7 +340,7 @@ fn script_execution_p2wsh(
                         }
 
                         104 => {
-                            println!("OP_IF: SUCCESSFULL");
+                            // println!("OP_IF: SUCCESSFULL");
                             break;
                         }
 
@@ -533,7 +533,7 @@ fn script_execution_p2wsh(
                         }
 
                         104 => {
-                            println!("OP_NOTIF: SUCCESSFULL");
+                            // println!("OP_NOTIF: SUCCESSFULL");
                             break;
                         }
 
@@ -586,21 +586,21 @@ mod test {
                                         f_count += 1;
                                     }
 
-                                    println!("\n\n");
+                                    // println!("\n\n");
                                 }
                             }
                             Err(e) => {
-                                println!("Failed to parse JSON: {}", e);
+                                // println!("Failed to parse JSON: {}", e);
                             }
                         }
                     }
-                    Err(e) => eprintln!("Failed to read file: {}", e),
+                    Err(e) =>{}
                 }
             }
         }
 
-        println!("success: {}", s_count);
-        println!("failure: {}", f_count);
+        // println!("success: {}", s_count);
+        // println!("failure: {}", f_count);
 
         Ok(())
     }

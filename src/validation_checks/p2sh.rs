@@ -22,7 +22,7 @@ pub fn input_verification_p2sh(tx_input_index: usize, tx: Transaction) -> Result
     let scriptsig_asm = match tx.vin[tx_input_index].scriptsig_asm.clone() {
         Some(value) => value,
         None => {
-            eprintln!("SCRIPT SIG ASM: MISSING");
+            // eprintln!("SCRIPT SIG ASM: MISSING");
             return Ok(false);
         }
     };
@@ -30,7 +30,7 @@ pub fn input_verification_p2sh(tx_input_index: usize, tx: Transaction) -> Result
     let inner_redeemscript_asm = match tx.vin[tx_input_index].inner_redeemscript_asm.clone() {
         Some(value) => value,
         None => {
-            eprintln!("INNER REDEEM SCRIPT: MISSING");
+            // eprintln!("INNER REDEEM SCRIPT: MISSING");
             return Ok(false);
         }
     };
@@ -91,7 +91,7 @@ fn script_execution_p2sh(
         }
     }
 
-    println!("SCRIPTSIG: SUCCESSFULL");
+    // println!("SCRIPTSIG: SUCCESSFULL");
 
     // EXECUTING SCRIPT PUB KEY
     let scriptpubkey_asm_opcodes: Vec<&str> = scriptpubkey_asm.split_whitespace().collect();
@@ -112,10 +112,10 @@ fn script_execution_p2sh(
                 let b = stack.pop().expect("STACK UNDERFLOW: OP_EQUAL");
 
                 if a != b {
-                    println!("OP_EQUAL: FAILED");
+                    // println!("OP_EQUAL: FAILED");
                     return Ok(false);
                 } else {
-                    println!("SCRIPTPUBKKEY: SUCCESSFULL");
+                    // println!("SCRIPTPUBKKEY: SUCCESSFULL");
                 }
             }
             _ => continue,
@@ -123,7 +123,7 @@ fn script_execution_p2sh(
     }
 
     if input_type == "NON_SEGWIT" {
-        println!("NON-SEGWIT");
+        // println!("NON-SEGWIT");
 
         // EXECUTE INNER REDEEM SCRIPT ASM
 
@@ -187,10 +187,10 @@ fn script_execution_p2sh(
                     let b = stack.pop().expect("STACK UNDERFLOW: OP_EQUALVERIFY");
 
                     if a == b {
-                        println!("REDEEM EQUAL: SUCCESSFULL");
+                        // println!("REDEEM EQUAL: SUCCESSFULL");
                         script_result = true;
                     } else {
-                        println!("REDEEM EQUAL: FAILED");
+                        // println!("REDEEM EQUAL: FAILED");
                         return Ok(false);
                     }
                 }
@@ -199,7 +199,7 @@ fn script_execution_p2sh(
                     let result = op_checksig(&mut stack, tx.clone(), tx_input_index, input_type)?;
 
                     if result == false {
-                        println!("OP_CHECKSIGVERIFY: FAILED");
+                        // println!("OP_CHECKSIGVERIFY: FAILED");
                         return Ok(false);
                     }
                 }
@@ -228,7 +228,7 @@ fn script_execution_p2sh(
     if input_type == "P2SH-P2WPKH" {
         // EXECUTE WITNESS
 
-        println!("P2SH-P2WPKH");
+        // println!("P2SH-P2WPKH");
 
         // PUSH SIGNATURE
         stack.push(hex::decode(&witness[0]).expect("DECODING: FAILED"));
@@ -268,18 +268,18 @@ fn script_execution_p2sh(
         let b = stack.pop().expect("STACK UNDERFLOW");
 
         if a != b {
-            println!("OP_EQUALVERIFY: FAILED");
+            // println!("OP_EQUALVERIFY: FAILED");
             return Ok(false);
         }
 
         // OP_CHECKSIG
         script_result = op_checksig(&mut stack, tx.clone(), tx_input_index, input_type)?;
-        println!("script_result: {}", script_result);
+        // println!("script_result: {}", script_result);
     }
 
     if input_type == "P2SH-P2WSH" {
         // EXECUTE WITNESS
-        println!("P2SH-P2WSH");
+        // println!("P2SH-P2WSH");
 
         // PUSH SIGNATURES
 
@@ -383,7 +383,7 @@ fn script_execution_p2sh(
                             continue;
                         }
                     }
-                    println!("OP_NOTIF: SUCCESSFULL");
+                    // println!("OP_NOTIF: SUCCESSFULL");
                 }
 
                 99 => {
@@ -400,7 +400,7 @@ fn script_execution_p2sh(
                             continue;
                         }
                     }
-                    println!("OP_IF: SUCESSFULL");
+                    // println!("OP_IF: SUCESSFULL");
                 }
 
                 115 => {
@@ -459,21 +459,21 @@ mod test {
                                         f_count += 1;
                                     }
 
-                                    println!("\n\n");
+                                    // println!("\n\n");
                                 }
                             }
                             Err(e) => {
-                                println!("Failed to parse JSON: {}", e);
+                                // println!("Failed to parse JSON: {}", e);
                             }
                         }
                     }
-                    Err(e) => eprintln!("Failed to read file: {}", e),
+                    Err(e) => {}
                 }
             }
         }
 
-        println!("success: {}", s_count);
-        println!("failure: {}", f_count);
+        // println!("success: {}", s_count);
+        // println!("failure: {}", f_count);
 
         Ok(())
     }

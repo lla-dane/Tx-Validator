@@ -1,13 +1,11 @@
 mod block_mine;
 mod error;
 mod transaction;
-mod tx;
 mod validation_checks;
 
 use crate::error::Result;
 use serde_json::to_string_pretty;
 use transaction::load_mempool_transactions;
-use tx::load_transactions;
 use walkdir::WalkDir;
 
 use crate::validation_checks::all_transaction_verification;

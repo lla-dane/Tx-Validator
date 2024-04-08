@@ -73,9 +73,9 @@ pub fn valid_block_header() -> Result<()> {
             BigUint::from_str_radix(&block_hash, 16).expect("Invalid hex in block hash");
 
         if block_hash_int <= target_int {
-            println!("Valid nonce found: {}", nonce);
-            println!("Block header: {}", block_header);
-            println!("Hash: {}", block_hash);
+            // println!("Valid nonce found: {}", nonce);
+            // println!("Block header: {}", block_header);
+            // println!("Hash: {}", block_hash);
 
             valid_block_header = block_header;
             break;

@@ -78,9 +78,9 @@ pub fn op_checksig(
 
     if secp.verify_ecdsa(&msg, &sig, &pubkey).is_ok() {
         result = true;
-        println!("OP_CHECKSIG: SUCCESSFULL");
+        // println!("OP_CHECKSIG: SUCCESSFULL");
     } else {
-        println!("OP_CHECKSIG: FAILED")
+        // println!("OP_CHECKSIG: FAILED")
     }
 
     Ok(result)
@@ -157,11 +157,11 @@ pub fn op_checkmultisig(
     let result;
 
     if valid_sig_count == n_signatures {
-        println!("OP_MULTICHECKSIG: SUCCESSFULL");
+        // println!("OP_MULTICHECKSIG: SUCCESSFULL");
         result = true;
     } else {
-        println!("OP_MULTICHECKSIG: FAILED");
-        println!("{}", valid_sig_count);
+        // println!("OP_MULTICHECKSIG: FAILED");
+        // println!("{}", valid_sig_count);
         result = false;
     }
 
@@ -382,7 +382,7 @@ pub fn trimmed_tx(
         }
 
         if input_type == "P2WPKH" {
-            println!("P2WPKH");
+            // println!("P2WPKH");
             trimmed_tx.extend(&tx.version.to_le_bytes());
 
             // PUSHING HASHPREVOUTS AND HASHSEQUENCE
@@ -459,7 +459,7 @@ pub fn trimmed_tx(
         }
 
         if input_type == "P2WSH" {
-            println!("P2WSH");
+            // println!("P2WSH");
             trimmed_tx.extend(&tx.version.to_le_bytes());
 
             // PUSHING HASHPREVOUTS AND HASHSEQUENCE
@@ -529,8 +529,8 @@ pub fn trimmed_tx(
             trimmed_tx.extend(tx.locktime.to_le_bytes());
         }
     } else {
-        println!("NEW SIGHASH FOUND: {}", sighash_type);
-        println!("txid: {:?}", tx.vin[0].txid);
+        // println!("NEW SIGHASH FOUND: {}", sighash_type);
+        // println!("txid: {:?}", tx.vin[0].txid);
     }
 
     // TRASNSACTION BYTE SEQUENCE READY
@@ -550,14 +550,14 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
 
     // GAS FEES CHECK
     if gas_fees_check(&tx) != true {
-        println!("TRANSACTION INVALID: LOW GAS FEES");
+        // println!("TRANSACTION INVALID: LOW GAS FEES");
         return Ok(false);
     }
 
     for input_index in 0..tx.vin.len() {
         if tx.vin[input_index].prevout.scriptpubkey_type != tx_type {
-            println!("TRANSACTION ADDRESS: INVALID");
-            println!("{}", tx.vin[0].txid);
+            // println!("TRANSACTION ADDRESS: INVALID");
+            // println!("{}", tx.vin[0].txid);
             return Ok(false);
         }
     }
@@ -566,7 +566,7 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2pkh(tx.clone(), input_index) {
                 Ok(false) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
 
@@ -575,17 +575,17 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                 }
 
                 Err(_) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
             }
         }
-        println!("TRASNACTION: VALID");
+        // println!("TRASNACTION: VALID");
     } else if tx_type == _p2sh {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2sh(input_index, tx.clone()) {
                 Ok(false) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
 
@@ -594,17 +594,17 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                 }
 
                 Err(_) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
             }
         }
-        println!("TRASNACTION: VALID");
+        // println!("TRASNACTION: VALID");
     } else if tx_type == _p2wpkh {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2wpkh(input_index, tx.clone()) {
                 Ok(false) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
 
@@ -613,17 +613,17 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                 }
 
                 Err(_) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
             }
         }
-        println!("TRASNACTION: VALID");
+        // println!("TRASNACTION: VALID");
     } else if tx_type == _p2wsh {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2wsh(input_index, tx.clone()) {
                 Ok(false) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
 
@@ -632,12 +632,12 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                 }
 
                 Err(_) => {
-                    println!("TRASNACTION: INVALID");
+                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
             }
         }
-        println!("TRASNACTION: VALID");
+        // println!("TRASNACTION: VALID");
     } else if tx_type == _p2tr {
         // CHECK IF THE WITNESS ITEMS LENGTH IS <255
 
@@ -646,7 +646,7 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
             for item in witness {
                 let item_bytes = hex::decode(&item)?;
                 if item_bytes.len() >= 255 {
-                    println!("*****************************************************************************************************************************");
+                    // println!("*****************************************************************************************************************************");
                     return Ok(false);
                 }
             }
@@ -729,22 +729,22 @@ pub fn all_transaction_verification() -> Result<()> {
                                     f_count += 1;
                                 }
 
-                                println!("\n\n");
+                                // println!("\n\n");
                             }
                         }
                         Err(e) => {
-                            println!("Failed to parse JSON: {}", e);
+                            // println!("Failed to parse JSON: {}", e);
                         }
                     }
                 }
-                Err(e) => eprintln!("Failed to read file: {}", e),
+                Err(e) => {}
             }
         }
     }
 
-    println!("success: {}", s_count);
-    println!("failure: {}", f_count);
-    println!("doubles: {}", d_spends);
+    // println!("success: {}", s_count);
+    // println!("failure: {}", f_count);
+    // println!("doubles: {}", d_spends);
 
     Ok(())
 }
@@ -803,22 +803,22 @@ mod test {
                                         f_count += 1;
                                     }
 
-                                    println!("\n\n");
+                                    // println!("\n\n");
                                 }
                             }
                             Err(e) => {
-                                println!("Failed to parse JSON: {}", e);
+                                // println!("Failed to parse JSON: {}", e);
                             }
                         }
                     }
-                    Err(e) => eprintln!("Failed to read file: {}", e),
+                    Err(e) => {}
                 }
             }
         }
 
-        println!("success: {}", s_count);
-        println!("failure: {}", f_count);
-        println!("doubles: {}", d_spends);
+        // println!("success: {}", s_count);
+        // println!("failure: {}", f_count);
+        // println!("doubles: {}", d_spends);
 
         Ok(())
     }

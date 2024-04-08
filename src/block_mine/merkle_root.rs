@@ -1,4 +1,4 @@
-use crate::{error::Result, tx};
+use crate::{error::Result};
 use std::{collections::HashMap, fmt::format, fs::File, io::Write, slice::Windows};
 
 use crate::transaction::Transaction;

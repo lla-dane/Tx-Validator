@@ -82,21 +82,21 @@ mod test {
                                         f_count += 1;
                                     }
 
-                                    println!("\n\n");
+                                    // println!("\n\n");
                                 }
                             }
                             Err(e) => {
-                                println!("Failed to parse JSON: {}", e);
+                                // println!("Failed to parse JSON: {}", e);
                             }
                         }
                     }
-                    Err(e) => eprintln!("Failed to read file: {}", e),
+                    Err(e) => {}
                 }
             }
         }
 
-        println!("success: {}", s_count);
-        println!("failure: {}", f_count);
+        // println!("success: {}", s_count);
+        // println!("failure: {}", f_count);
 
         Ok(())
     }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, os::fd::RawFd};
+use std::{collections::HashMap, fs, os::fd::RawFd, path::Path};
 
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
@@ -12,7 +12,28 @@ pub fn double_sha256(data: &[u8]) -> Vec<u8> {
     Sha256::digest(&Sha256::digest(data)).to_vec()
 }
 
+fn clear_directory<P: AsRef<Path>>(path: P) -> Result<()> {
+    let entries = fs::read_dir(path.as_ref())?;
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            // Recursively clear the directory
+            clear_directory(&path)?;
+            // Remove the directory itself after clearing its contents
+            fs::remove_dir(&path)?;
+        } else {
+            // It's a file, so remove it
+            fs::remove_file(&path)?;
+        }
+    }
+    Ok(())
+}
+
 pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u64)>> {
+    // let path = Path::new("./valid-mempool");
+    // clear_directory(path)?;
+
     let v_mempool_dir = "./valid-mempool";
     let mut map: Vec<(String, Transaction, String, usize, u64)> = Vec::new();
 
@@ -29,7 +50,6 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
                             serialise_tx(&transaction)?;
 
                         if result == true {
-
                             let mut txid = double_sha256(&serialised_tx);
                             let mut wtxid = double_sha256(&serialised_wtx);
 
@@ -39,8 +59,6 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
                             let txid = hex::encode(txid);
                             let wtxid = hex::encode(wtxid);
 
-
-
                             // Find the correct position to insert the transaction based on its fees
                             let position = map
                                 .iter()
@@ -49,9 +67,9 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
                             map.insert(position, (txid, transaction, wtxid, tx_weight, fees));
                         }
                     }
-                    Err(e) => println!("Failed to parse JSON: {}", e),
+                    Err(e) => {}
                 },
-                Err(e) => eprintln!("Failed to read file: {}", e),
+                Err(e) => {}
             }
         }
     }
@@ -299,10 +317,10 @@ mod test {
         let mut total_weight = 0;
 
         for (_, _, _, weight, _) in map {
-            println!("{}", weight);
+            // println!("{}", weight);
             total_weight += weight;
         }
-        println!("{}", total_weight);
+        // println!("{}", total_weight);
 
         Ok(())
     }
@@ -316,7 +334,7 @@ mod test {
             .filter_map(|e| e.ok())
         {
             let path = entry.path();
-            println!("{}", path.display().to_string());
+            // println!("{}", path.display().to_string());
         }
 
         Ok(())
