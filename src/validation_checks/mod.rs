@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::HashMap, fs::{self, File}, path::Path};
 
 use ripemd::Ripemd160;
 use secp256k1::{ecdsa::Signature, Message, PublicKey, Secp256k1};
@@ -719,6 +719,8 @@ pub fn all_transaction_verification() -> Result<()> {
                                 if result == true {
                                     s_count += 1;
                                     if let Some(filename) = path.file_name() {
+                                        
+
                                         let valid_mempool_dir = Path::new("./valid-mempool");
                                         let destination_path = valid_mempool_dir.join(filename);
                                         fs::copy(&path, &destination_path)?;
