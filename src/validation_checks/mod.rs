@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::{self, File}, path::Path};
+use std::{collections::HashMap, fs::{self}, path::Path};
 
 use ripemd::Ripemd160;
 use secp256k1::{ecdsa::Signature, Message, PublicKey, Secp256k1};
@@ -7,7 +7,7 @@ use walkdir::WalkDir;
 
 use crate::{
     error::Result,
-    transaction::{self, Input, Transaction},
+    transaction::Transaction,
 };
 
 use self::{
@@ -684,9 +684,9 @@ fn gas_fees_check(tx: &Transaction) -> bool {
 }
 
 pub fn all_transaction_verification() -> Result<()> {
-    let mut s_count = 0;
-    let mut f_count = 0;
-    let mut d_spends = 0;
+    // let mut s_count = 0;
+    // let mut f_count = 0;
+    // let mut d_spends = 0;
     let mempool_dir = "./mempool";
     let mut spends: HashMap<String, String> = HashMap::new();
     'outer: for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
@@ -697,7 +697,7 @@ pub fn all_transaction_verification() -> Result<()> {
                     match serde_json::from_str::<Transaction>(&contents) {
                         Ok(transaction) => {
                             // Check if all inputs' prevout scriptpubkey_type are .p2sh
-                            let all_p2sh = transaction.vin.iter().all(|input| true);
+                            let all_p2sh = true;
                             if all_p2sh {
                                 for input in &transaction.vin {
                                     let input_key = format!("{}{}", input.txid, input.vout);
@@ -705,7 +705,7 @@ pub fn all_transaction_verification() -> Result<()> {
                                         Some(existing_txid)
                                             if path.display().to_string() != *existing_txid =>
                                         {
-                                            d_spends += 1;
+                                            // d_spends += 1;
                                             continue 'outer;
                                         }
                                         _ => {
@@ -717,7 +717,7 @@ pub fn all_transaction_verification() -> Result<()> {
                                 let result = verify_tx(transaction)?;
 
                                 if result == true {
-                                    s_count += 1;
+                                    // s_count += 1;
                                     if let Some(filename) = path.file_name() {
                                         
 
@@ -726,18 +726,18 @@ pub fn all_transaction_verification() -> Result<()> {
                                         fs::copy(&path, &destination_path)?;
                                     }
                                 } else {
-                                    f_count += 1;
+                                    // f_count += 1;
                                 }
 
                                 // println!("\n\n");
                             }
                         }
-                        Err(e) => {
+                        Err(_e) => {
                             // println!("Failed to parse JSON: {}", e);
                         }
                     }
                 }
-                Err(e) => {}
+                Err(_e) => {}
             }
         }
     }
@@ -759,9 +759,9 @@ mod test {
 
     #[test]
     fn test_all_transaction_verification() -> Result<()> {
-        let mut s_count = 0;
-        let mut f_count = 0;
-        let mut d_spends = 0;
+        // let mut s_count = 0;
+        // let mut f_count = 0;
+        // let mut d_spends = 0;
         let mempool_dir = "./mempool2";
         let mut spends: HashMap<String, String> = HashMap::new();
         'outer: for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
@@ -772,7 +772,7 @@ mod test {
                         match serde_json::from_str::<Transaction>(&contents) {
                             Ok(transaction) => {
                                 // Check if all inputs' prevout scriptpubkey_type are .p2sh
-                                let all_p2sh = transaction.vin.iter().all(|input| true);
+                                let all_p2sh = true;
                                 if all_p2sh {
                                     for input in &transaction.vin {
                                         let input_key = format!("{}{}", input.txid, input.vout);
@@ -780,7 +780,7 @@ mod test {
                                             Some(existing_txid)
                                                 if path.display().to_string() != *existing_txid =>
                                             {
-                                                d_spends += 1;
+                                                // d_spends += 1;
                                                 continue 'outer;
                                             }
                                             _ => {
@@ -793,25 +793,25 @@ mod test {
                                     let result = verify_tx(transaction)?;
 
                                     if result == true {
-                                        s_count += 1;
+                                        // s_count += 1;
                                         if let Some(filename) = path.file_name() {
                                             let valid_mempool_dir = Path::new("./valid-mempool");
                                             let destination_path = valid_mempool_dir.join(filename);
                                             fs::copy(&path, &destination_path)?;
                                         }
                                     } else {
-                                        f_count += 1;
+                                        // f_count += 1;
                                     }
 
                                     // println!("\n\n");
                                 }
                             }
-                            Err(e) => {
+                            Err(_e) => {
                                 // println!("Failed to parse JSON: {}", e);
                             }
                         }
                     }
-                    Err(e) => {}
+                    Err(_e) => {}
                 }
             }
         }

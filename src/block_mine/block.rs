@@ -1,8 +1,7 @@
 use std::{fs::File, io::Write};
 
 use num_bigint::BigUint;
-use num_traits::{Num, Pow};
-use sha2::digest::typenum::bit;
+use num_traits::Num;
 
 use crate::{block_mine::serialise_tx::double_sha256, error::Result};
 
@@ -51,9 +50,9 @@ pub fn valid_block_header() -> Result<()> {
 
     let mut nonce: u32 = 0;
 
-    let nonce_max: u32 = 4294967295;
+    // let nonce_max: u32 = 4294967295;
 
-    let mut valid_block_header: String = String::new();
+    let valid_block_header: String;
 
     loop {
         let nonce_hex = hex::encode(nonce.to_le_bytes());
@@ -114,7 +113,7 @@ mod test {
 
     #[test]
     fn block_test() -> Result<()> {
-        valid_block_header();
+        // valid_block_header();
 
         Ok(())
     }

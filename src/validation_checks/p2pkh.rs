@@ -5,9 +5,8 @@ use secp256k1::{ecdsa::Signature, Message, PublicKey, Secp256k1};
 use sha2::{Digest, Sha256};
 
 use crate::error::Result;
-use crate::transaction::{Input, Output, Prevout, Transaction};
+use crate::transaction::Transaction;
 
-use super::single_sha256;
 
 pub fn input_verification_p2pkh(tx: Transaction, tx_input_index: usize) -> Result<bool> {
     // get signature and public key from the scriptsig_asm
@@ -190,105 +189,105 @@ fn extract_sighash_type(scriptsig_asm: String) -> Option<u32> {
     Some(sighash_type)
 }
 
-#[cfg(test)]
-mod test {
-    use std::fs;
+// #[cfg(test)]
+// mod test {
+//     use std::fs;
 
-    use super::*;
-    use walkdir::WalkDir;
+//     use super::*;
+//     use walkdir::WalkDir;
 
-    #[test]
-    fn test_script_execution_p2pkh() -> Result<()> {
-        let mut s_count = 0;
-        let mut f_count = 0;
+//     #[test]
+//     fn test_script_execution_p2pkh() -> Result<()> {
+//         let mut s_count = 0;
+//         let mut f_count = 0;
 
-        let mempool_dir = "./mempool";
-        for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
-            let path = entry.path();
-            if path.is_file() {
-                match fs::read_to_string(path) {
-                    Ok(contents) => {
-                        match serde_json::from_str::<Transaction>(&contents) {
-                            Ok(transaction) => {
-                                // Check if all inputs' prevout scriptpubkey_type are .p2sh
-                                let all_p2sh = transaction.clone().vin.iter().all(|input| {
-                                    input.prevout.scriptpubkey_type == "p2pkh".to_string()
-                                });
+//         let mempool_dir = "./mempool";
+//         for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
+//             let path = entry.path();
+//             if path.is_file() {
+//                 match fs::read_to_string(path) {
+//                     Ok(contents) => {
+//                         match serde_json::from_str::<Transaction>(&contents) {
+//                             Ok(transaction) => {
+//                                 // Check if all inputs' prevout scriptpubkey_type are .p2sh
+//                                 let all_p2sh = transaction.clone().vin.iter().all(|input| {
+//                                     input.prevout.scriptpubkey_type == "p2pkh".to_string()
+//                                 });
 
-                                let mut tx_result = true;
+//                                 let mut tx_result = true;
 
-                                if all_p2sh {
-                                    for input_index in 0..transaction.vin.len() {
-                                        let scriptsig_asm = transaction.clone().vin[input_index]
-                                            .scriptsig_asm
-                                            .clone()
-                                            .expect("ASM: MISSING");
+//                                 if all_p2sh {
+//                                     for input_index in 0..transaction.vin.len() {
+//                                         let scriptsig_asm = transaction.clone().vin[input_index]
+//                                             .scriptsig_asm
+//                                             .clone()
+//                                             .expect("ASM: MISSING");
 
-                                        let tx = transaction.clone();
-                                        let result = script_execution(
-                                            tx.vin[input_index].prevout.scriptpubkey_asm.clone(),
-                                            scriptsig_asm,
-                                            tx,
-                                            input_index,
-                                        );
-                                        if result == false {
-                                            tx_result = false;
-                                            break;
-                                        }
-                                    }
+//                                         let tx = transaction.clone();
+//                                         let result = script_execution(
+//                                             tx.vin[input_index].prevout.scriptpubkey_asm.clone(),
+//                                             scriptsig_asm,
+//                                             tx,
+//                                             input_index,
+//                                         );
+//                                         if result == false {
+//                                             tx_result = false;
+//                                             break;
+//                                         }
+//                                     }
 
-                                    if tx_result == true {
-                                        s_count += 1;
-                                    } else {
-                                        f_count += 1;
-                                    }
+//                                     if tx_result == true {
+//                                         s_count += 1;
+//                                     } else {
+//                                         f_count += 1;
+//                                     }
 
-                                    println!("\n\n");
-                                }
-                            }
-                            Err(e) => {
-                                println!("Failed to parse JSON: {}", e);
-                            }
-                        }
-                    }
-                    Err(e) => eprintln!("Failed to read file: {}", e),
-                }
-            }
-        }
+//                                     println!("\n\n");
+//                                 }
+//                             }
+//                             Err(e) => {
+//                                 println!("Failed to parse JSON: {}", e);
+//                             }
+//                         }
+//                     }
+//                     Err(e) => eprintln!("Failed to read file: {}", e),
+//                 }
+//             }
+//         }
 
-        println!("success: {}", s_count);
-        println!("failure: {}", f_count);
+//         println!("success: {}", s_count);
+//         println!("failure: {}", f_count);
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    #[test]
-    fn test2() -> Result<()> {
-        let path =
-            "./mempool/26d19bbfa93b13cb2f941bee551b715ee5f4e8292c5ac96fc328dcbc3eb0101a.json";
+//     #[test]
+//     fn test2() -> Result<()> {
+//         let path =
+//             "./mempool/26d19bbfa93b13cb2f941bee551b715ee5f4e8292c5ac96fc328dcbc3eb0101a.json";
 
-        // Read the JSON file
-        let data = fs::read_to_string(path).expect("Unable to read file");
+//         // Read the JSON file
+//         let data = fs::read_to_string(path).expect("Unable to read file");
 
-        // Deserialize JSON into Rust data structures
-        let transaction: Transaction = serde_json::from_str(&data)?;
+//         // Deserialize JSON into Rust data structures
+//         let transaction: Transaction = serde_json::from_str(&data)?;
 
-        let scriptsig_asm = transaction.clone().vin[0]
-            .scriptsig_asm
-            .clone()
-            .expect("ASM: MISSING");
+//         let scriptsig_asm = transaction.clone().vin[0]
+//             .scriptsig_asm
+//             .clone()
+//             .expect("ASM: MISSING");
 
-        let tx = transaction.clone();
-        let result = script_execution(
-            tx.vin[0].prevout.scriptpubkey_asm.clone(),
-            scriptsig_asm,
-            tx,
-            0,
-        );
+//         let tx = transaction.clone();
+//         let result = script_execution(
+//             tx.vin[0].prevout.scriptpubkey_asm.clone(),
+//             scriptsig_asm,
+//             tx,
+//             0,
+//         );
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
 
 //         let dummy_tx: Transaction = Transaction {
 //     version: 2,

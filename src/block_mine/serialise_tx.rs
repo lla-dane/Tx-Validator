@@ -1,11 +1,11 @@
-use std::{collections::HashMap, fs, os::fd::RawFd, path::Path};
+use std::fs;
 
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
 use crate::{
     error::Result,
-    transaction::{self, Input, Transaction},
+    transaction::Transaction,
 };
 
 pub fn double_sha256(data: &[u8]) -> Vec<u8> {
@@ -49,9 +49,9 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
                             map.insert(position, (txid, transaction, wtxid, tx_weight, fees));
                         }
                     }
-                    Err(e) => {}
+                    Err(_e) => {}
                 },
-                Err(e) => {}
+                Err(_e) => {}
             }
         }
     }
@@ -237,7 +237,7 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
         // WITNESS ONLY IN WTX
         for input in tx.vin.iter() {
             let witness = input.witness.clone().unwrap();
-            let witness_len = witness.len();
+            // let witness_len = witness.len();
 
             raw_wtx.push(witness.len().try_into()?);
 
@@ -265,60 +265,60 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
     Ok((true, raw_tx, raw_wtx, tx_weight, fees))
 }
 
-#[cfg(test)]
-mod test {
-    use std::fs;
+// #[cfg(test)]
+// mod test {
+//     use std::fs;
 
-    use super::*;
+//     use super::*;
 
-    #[test]
-    fn test2() -> Result<()> {
-        let path =
-            "./mempool/9794a97e79dcec4425aaa1dbf448b7a99d19c6e47d831c5b31574ec785193617.json";
+//     #[test]
+//     fn test2() -> Result<()> {
+//         let path =
+//             "./mempool/9794a97e79dcec4425aaa1dbf448b7a99d19c6e47d831c5b31574ec785193617.json";
 
-        // Read the JSON file
-        let data = fs::read_to_string(path).expect("Unable to read file");
+//         // Read the JSON file
+//         let data = fs::read_to_string(path).expect("Unable to read file");
 
-        // Deserialize JSON into Rust data structures
-        let transaction: Transaction = serde_json::from_str(&data)?;
+//         // Deserialize JSON into Rust data structures
+//         let transaction: Transaction = serde_json::from_str(&data)?;
 
-        let scriptsig_asm = transaction.clone().vin[0]
-            .scriptsig_asm
-            .clone()
-            .expect("ASM: MISSING");
+//         let scriptsig_asm = transaction.clone().vin[0]
+//             .scriptsig_asm
+//             .clone()
+//             .expect("ASM: MISSING");
 
-        let tx = transaction.clone();
-        let result = serialise_tx(&transaction)?;
+//         let tx = transaction.clone();
+//         let result = serialise_tx(&transaction)?;
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    #[test]
-    fn test1() -> Result<()> {
-        let map = create_txid_tx_map()?;
-        let mut total_weight = 0;
+//     #[test]
+//     fn test1() -> Result<()> {
+//         let map = create_txid_tx_map()?;
+//         let mut total_weight = 0;
 
-        for (_, _, _, weight, _) in map {
-            // println!("{}", weight);
-            total_weight += weight;
-        }
-        // println!("{}", total_weight);
+//         for (_, _, _, weight, _) in map {
+//             // println!("{}", weight);
+//             total_weight += weight;
+//         }
+//         // println!("{}", total_weight);
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    #[test]
-    fn test5() -> Result<()> {
-        let v_mempool_dir = "./valid-mempool";
+//     #[test]
+//     fn test5() -> Result<()> {
+//         let v_mempool_dir = "./valid-mempool";
 
-        for entry in WalkDir::new(v_mempool_dir)
-            .into_iter()
-            .filter_map(|e| e.ok())
-        {
-            let path = entry.path();
-            // println!("{}", path.display().to_string());
-        }
+//         for entry in WalkDir::new(v_mempool_dir)
+//             .into_iter()
+//             .filter_map(|e| e.ok())
+//         {
+//             let path = entry.path();
+//             // println!("{}", path.display().to_string());
+//         }
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }

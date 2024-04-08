@@ -1,8 +1,5 @@
-use std::fs;
 
-use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Transaction {
@@ -43,29 +40,29 @@ pub struct Output {
     pub value: u64,
 }
 
-pub fn load_mempool_transactions() -> Result<(Vec<Transaction>)> {
-    let mempool_dir = "./mempool";
-    let mut txs = Vec::new();
+// pub fn load_mempool_transactions() -> Result<(Vec<Transaction>)> {
+//     let mempool_dir = "./mempool";
+//     let mut txs = Vec::new();
 
-    for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if path.is_file() {
-            // Read the file contents into a string.
-            match fs::read_to_string(path) {
-                Ok(contents) => {
-                    match serde_json::from_str::<Transaction>(&contents) {
-                        Ok(transaction) => {
-                            txs.push(transaction);
-                        }
-                        Err(e) => {
-                            // eprintln!("Failed to parse JSON: {}", e);
-                        }
-                    }
-                }
-                Err(e) => {}
-            }
-        }
-    }
+//     for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
+//         let path = entry.path();
+//         if path.is_file() {
+//             // Read the file contents into a string.
+//             match fs::read_to_string(path) {
+//                 Ok(contents) => {
+//                     match serde_json::from_str::<Transaction>(&contents) {
+//                         Ok(transaction) => {
+//                             txs.push(transaction);
+//                         }
+//                         Err(e) => {
+//                             // eprintln!("Failed to parse JSON: {}", e);
+//                         }
+//                     }
+//                 }
+//                 Err(e) => {}
+//             }
+//         }
+//     }
 
-    Ok(txs)
-}
+//     Ok(txs)
+// }

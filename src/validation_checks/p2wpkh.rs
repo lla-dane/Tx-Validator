@@ -1,10 +1,5 @@
 use hex;
-use log::info;
 
-use crate::transaction::{self, Input, Output, Prevout};
-use crate::validation_checks::double_sha256;
-use crate::validation_checks::hash160;
-use crate::validation_checks::op_checkmultisig;
 use crate::validation_checks::op_checksig;
 
 use crate::{error::Result, transaction::Transaction};
@@ -55,8 +50,8 @@ mod test {
 
     #[test]
     fn test_script_execution_p2wpkh() -> Result<()> {
-        let mut s_count = 0;
-        let mut f_count = 0;
+        // let mut s_count = 0;
+        // let mut f_count = 0;
         let mempool_dir = "./mempool";
         for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
             let path = entry.path();
@@ -77,20 +72,20 @@ mod test {
                                     )?;
 
                                     if result == true {
-                                        s_count += 1;
+                                        // s_count += 1;
                                     } else {
-                                        f_count += 1;
+                                        // f_count += 1;
                                     }
 
                                     // println!("\n\n");
                                 }
                             }
-                            Err(e) => {
-                                // println!("Failed to parse JSON: {}", e);
+                            Err(_e) => {
+                                // println!("Fail_ed to pars_e JSON: {}", _e);
                             }
                         }
                     }
-                    Err(e) => {}
+                    Err(_e) => {}
                 }
             }
         }

@@ -1,9 +1,8 @@
-use crate::{error::Result};
-use std::{collections::HashMap, fmt::format, fs::File, io::Write, slice::Windows};
+use crate::error::Result;
 
 use crate::transaction::Transaction;
 
-use super::serialise_tx::{create_txid_tx_map, double_sha256};
+use super::serialise_tx::double_sha256;
 
 pub fn generate_roots(
     map: Vec<(String, Transaction, String, usize, u64)>,
