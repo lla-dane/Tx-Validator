@@ -175,7 +175,8 @@ fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
     let message =
         Message::from_digest_slice(&trimmed_tx_hash).expect("ERROR CREATING MESSAGE FROM TX_HASH");
 
-    // println!("{}", message);
+    println!("{}", message);
+    println!("{}", signature);
 
     match secp.verify_ecdsa(&message, &signature, &public_key) {
         Ok(_) => return true,
@@ -267,7 +268,7 @@ mod test {
     #[test]
     fn test2() -> Result<()> {
         let path =
-            "./mempool/0b132689ad34b8505fd91eb5303ed273b09a7da23455afa17f529ef4576d5da9.json";
+            "./mempool/0ac528562a1626863c0cb912eb725530c54e786e6485380c16633e4b9bce1720.json";
 
         // Read the JSON file
         let data = fs::read_to_string(path).expect("Unable to read file");
@@ -275,17 +276,17 @@ mod test {
         // Deserialize JSON into Rust data structures
         let transaction: Transaction = serde_json::from_str(&data)?;
 
-        let scriptsig_asm = transaction.clone().vin[1]
+        let scriptsig_asm = transaction.clone().vin[0]
             .scriptsig_asm
             .clone()
             .expect("ASM: MISSING");
 
         let tx = transaction.clone();
         let result = script_execution(
-            tx.vin[1].prevout.scriptpubkey_asm.clone(),
+            tx.vin[0].prevout.scriptpubkey_asm.clone(),
             scriptsig_asm,
             tx,
-            1,
+            0,
         );
 
         println!("{}", result);

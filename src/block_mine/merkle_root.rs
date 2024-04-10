@@ -1,3 +1,5 @@
+use std::{fs::File, io::Write};
+
 use crate::error::Result;
 
 use crate::transaction::Transaction;
@@ -6,15 +8,14 @@ use super::serialise_tx::double_sha256;
 
 pub fn generate_roots(
     map: Vec<(String, Transaction, String, usize, u64)>,
-) -> Result<(String, String, String)> {
+) -> Result<(String, String, String, Vec<String>)> {
     let tx_weight_limit = 3000000;
     let mut current_tx_weight = 0;
-    let mut txid_vec: Vec<String> = Vec::new();
-    let mut txid_le_vec: Vec<String> = Vec::new();
-    let mut wtxid_vec: Vec<String> = Vec::new();
+    let mut txids: Vec<String> = Vec::new();
+    let mut wtxids: Vec<String> = Vec::new();
     let mut block_subsidy = 0;
 
-    wtxid_vec.push("0000000000000000000000000000000000000000000000000000000000000000".to_string());
+    wtxids.push("0000000000000000000000000000000000000000000000000000000000000000".to_string());
 
     for (txid, _, wtxid, weight, fees) in map {
         if current_tx_weight >= tx_weight_limit {
@@ -23,56 +24,74 @@ pub fn generate_roots(
         current_tx_weight += weight;
         block_subsidy += fees;
 
-        txid_le_vec.push(txid.clone());
-
-        let mut txid_reversed_bytes = hex::decode(txid)?;
-        txid_reversed_bytes.reverse();
-        let natural_txid = hex::encode(txid_reversed_bytes);
-
-        let mut wtxid_reversed_bytes = hex::decode(wtxid)?;
-        wtxid_reversed_bytes.reverse();
-        let natural_wtxid = hex::encode(wtxid_reversed_bytes);
-
-        txid_vec.push(natural_txid);
-        wtxid_vec.push(natural_wtxid);
+        txids.push(txid);
+        wtxids.push(wtxid);
     }
 
-    let witness_root_hash = merkel_root(wtxid_vec)?;
+    // let mut wtxid_file = File::create("./wtxids.txt")?;
+
+    // for wtxid in wtxids.clone() {
+    //     writeln!(wtxid_file, "{}", wtxid)?;
+    // }
+
+    println!("{}---------------------", wtxids.len());
+    println!("{}---------------------", txids.len());
+
+    let witness_root_hash = merkel_root(wtxids)?;
+
+    // println!("{}", witness_root_hash);
 
     let (coinbase_tx, txid_coinbase_tx) = create_coinbase(witness_root_hash, block_subsidy)?;
 
-    let coinbase_txid = hex::encode(double_sha256(&hex::decode(&txid_coinbase_tx)?));
+    let mut coinbase_txid_bytes = double_sha256(&hex::decode(&txid_coinbase_tx)?);
+    coinbase_txid_bytes.reverse();
 
-    txid_vec.insert(0, coinbase_txid.clone());
+    let coinbase_txid = hex::encode(coinbase_txid_bytes);
 
-    let merkel_root = merkel_root(txid_vec)?;
+    txids.insert(0, coinbase_txid.clone());
 
-    Ok((merkel_root, coinbase_tx, coinbase_txid))
+    println!("{}````````", txids[0]);
+    println!("{}```````", txids[1]);
+
+    let merkel_root = merkel_root(txids.clone())?;
+
+    Ok((merkel_root, coinbase_tx, coinbase_txid, txids))
 }
 
 fn merkel_root(txids: Vec<String>) -> Result<String> {
-    if txids.len() == 1 {
-        return Ok(txids[0].clone());
+    let mut txids_natural: Vec<String> = Vec::new();
+
+    for txid in txids.iter() {
+        let mut txid_bytes = hex::decode(txid)?;
+        txid_bytes.reverse();
+
+        txids_natural.push(hex::encode(txid_bytes));
     }
 
-    let mut result = Vec::new();
+    // println!("{:?}", txids_natural);
 
-    // ITERATE OVER TXIDS IN PAIRS
-    for chunk in txids.chunks(2) {
-        let concat = if chunk.len() == 2 {
-            // CONCATENATE EACH PAIR
-            format!("{}{}", chunk[0], chunk[1])
-        } else {
-            // DUPLICATE OF ITS ALONE
-            format!("{}{}", chunk[0], chunk[0])
-        };
+    while txids_natural.len() > 1 {
+        let mut next_level = Vec::new();
 
-        let parent_hex = double_sha256(&hex::decode(concat)?);
-        result.push(hex::encode(parent_hex));
+        // If odd number of txids_natural, duplicate the last one
+        if txids_natural.len() % 2 != 0 {
+            txids_natural.push(txids_natural.last().unwrap().clone());
+        }
+
+        for chunk in txids_natural.chunks(2) {
+            match chunk {
+                [one, two] => {
+                    let concat = one.to_owned() + two;
+                    next_level.push(hex::encode(double_sha256(&hex::decode(&concat)?)));
+                }
+                _ => unreachable!(), // This case should never happen due to the duplication logic above
+            }
+        }
+
+        txids_natural = next_level;
     }
 
-    // RECURSIVELY PROCESS THE NEXT LEVEL
-    merkel_root(result)
+    Ok(txids_natural[0].clone())
 }
 
 pub fn create_coinbase(witness_root_hash: String, block_subsidy: u64) -> Result<(String, String)> {
@@ -188,22 +207,27 @@ pub fn create_coinbase(witness_root_hash: String, block_subsidy: u64) -> Result<
     coinbase_tx.push_str("00000000");
     txid_coinbase_tx.push_str("00000000");
 
+    // println!("{}", wtxid_commitment);
+
     Ok((coinbase_tx, txid_coinbase_tx))
 }
 
 #[cfg(test)]
 
 mod test {
-    use crate::validation_checks::double_sha256;
-
     use super::*;
 
     #[test]
     fn merkel_test() -> Result<()> {
-        let tx = "010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2503233708184d696e656420627920416e74506f6f6c373946205b8160a4256c0000946e0100ffffffff02f595814a000000001976a914edf10a7fac6b32e24daa5305c723f3de58db1bc888ac0000000000000000266a24aa21a9ed52484daa9558fd003c94c61c410ff8eddf264f896a0f46c3b661ff2b30cfbd9c0120000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
-        let txid = hex::encode(double_sha256(&hex::decode(&tx)?));
+        let txids = vec![
+            "2ec4532bbb79b5875f3e86cf11f3f1e42b74717c573368a92558cff7b1033365".to_string(),
+            "958ffdb52a9148d3a6fca79d21d6b17e146c94909f6e63dd7723e409b10a1cd2".to_string(),
+            "dbba5fdfee9cb36e4f80db9ed7daebaa1460f9836bb0328db2f9f2dc4cd02d14".to_string(),
+        ];
 
-        println!("{}", txid);
+        let merkel_root = merkel_root(txids)?;
+
+        println!("{}", merkel_root);
 
         Ok(())
     }

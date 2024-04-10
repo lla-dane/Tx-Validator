@@ -65,9 +65,9 @@ pub fn valid_block_header() -> Result<()> {
         "0000000000000000000000000000000000000000000000000000000000000000".to_string();
 
     let map = create_txid_tx_map()?;
-    let (merkel_root, coinbase_tx, coinbase_txid) = generate_roots(map.clone())?;
+    let (merkel_root, coinbase_tx, coinbase_txid, txids) = generate_roots(map.clone())?;
 
-    let time_stamp_int: u32 = 1712571823;
+    let time_stamp_int: u32 = 1712671823;
     let time_stamp = hex::encode(time_stamp_int.to_le_bytes());
 
     let target = "0000ffff00000000000000000000000000000000000000000000000000000000";
@@ -78,12 +78,17 @@ pub fn valid_block_header() -> Result<()> {
     let bits = target_to_compact(target);
     let bits_hex = format!("{:08x}", bits);
 
+    let mut merkel_root_bytes = hex::decode(&merkel_root)?;
+    merkel_root_bytes.reverse();
+
+    let merkel_root_le = hex::encode(merkel_root_bytes);
+
     let mut bits_in_bytes = hex::decode(&bits_hex)?;
     bits_in_bytes.reverse();
 
     let bits_le = hex::encode(bits_in_bytes);
 
-    println!("{}", bits_le);
+    // println!("{}", bits_le);
 
     let mut nonce: u32 = 0;
 
@@ -98,7 +103,7 @@ pub fn valid_block_header() -> Result<()> {
 
         block_header.push_str(&version);
         block_header.push_str(&prev_block_hash);
-        block_header.push_str(&merkel_root);
+        block_header.push_str(&merkel_root_le);
         block_header.push_str(&time_stamp);
         block_header.push_str(&bits_le);
         block_header.push_str(&nonce_hex);
@@ -132,18 +137,15 @@ pub fn valid_block_header() -> Result<()> {
     // COINBASE TXID
     // REGULAR TXID
 
-    let mut coinbase_txid_le = hex::decode(&coinbase_txid)?;
-    coinbase_txid_le.reverse();
-
-    let coinbase_txid_le_hex = hex::encode(coinbase_txid_le);
 
     let mut block_file = File::create("./output.txt")?;
 
+    println!("{}", txids.len());
+
     writeln!(block_file, "{}", valid_block_header)?;
     writeln!(block_file, "{}", coinbase_tx)?;
-    writeln!(block_file, "{}", coinbase_txid_le_hex)?;
 
-    for (txid, _, _, _, _) in map {
+    for txid in txids {
         writeln!(block_file, "{}", txid)?;
     }
 

@@ -3,10 +3,7 @@ use std::fs;
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
-use crate::{
-    error::Result,
-    transaction::Transaction,
-};
+use crate::{error::Result, transaction::Transaction};
 
 pub fn double_sha256(data: &[u8]) -> Vec<u8> {
     Sha256::digest(&Sha256::digest(data)).to_vec()
@@ -265,60 +262,56 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
     Ok((true, raw_tx, raw_wtx, tx_weight, fees))
 }
 
-// #[cfg(test)]
-// mod test {
-//     use std::fs;
+#[cfg(test)]
+mod test {
+    use std::fs;
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test2() -> Result<()> {
-//         let path =
-//             "./mempool/9794a97e79dcec4425aaa1dbf448b7a99d19c6e47d831c5b31574ec785193617.json";
+    #[test]
+    fn test2() -> Result<()> {
+        let path =
+            "./mempool/fea944f8806101aa188e2feb4a0b0158b3531da3f15767e32400274bf3454f8c.json";
 
-//         // Read the JSON file
-//         let data = fs::read_to_string(path).expect("Unable to read file");
+        // Read the JSON file
+        let data = fs::read_to_string(path).expect("Unable to read file");
 
-//         // Deserialize JSON into Rust data structures
-//         let transaction: Transaction = serde_json::from_str(&data)?;
+        // Deserialize JSON into Rust data structures
+        let transaction: Transaction = serde_json::from_str(&data)?;
 
-//         let scriptsig_asm = transaction.clone().vin[0]
-//             .scriptsig_asm
-//             .clone()
-//             .expect("ASM: MISSING");
+        let (_, tx, wtx, _, _) = serialise_tx(&transaction)?;
+        println!("{}", hex::encode(tx));
+        println!("{}", hex::encode(wtx));
 
-//         let tx = transaction.clone();
-//         let result = serialise_tx(&transaction)?;
+        Ok(())
+    }
 
-//         Ok(())
-//     }
+    #[test]
+    fn test1() -> Result<()> {
+        let map = create_txid_tx_map()?;
+        let mut total_weight = 0;
 
-//     #[test]
-//     fn test1() -> Result<()> {
-//         let map = create_txid_tx_map()?;
-//         let mut total_weight = 0;
+        for (_, _, _, weight, _) in map {
+            // println!("{}", weight);
+            total_weight += weight;
+        }
+        // println!("{}", total_weight);
 
-//         for (_, _, _, weight, _) in map {
-//             // println!("{}", weight);
-//             total_weight += weight;
-//         }
-//         // println!("{}", total_weight);
+        Ok(())
+    }
 
-//         Ok(())
-//     }
+    #[test]
+    fn test5() -> Result<()> {
+        let v_mempool_dir = "./valid-mempool";
 
-//     #[test]
-//     fn test5() -> Result<()> {
-//         let v_mempool_dir = "./valid-mempool";
+        for entry in WalkDir::new(v_mempool_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let path = entry.path();
+            // println!("{}", path.display().to_string());
+        }
 
-//         for entry in WalkDir::new(v_mempool_dir)
-//             .into_iter()
-//             .filter_map(|e| e.ok())
-//         {
-//             let path = entry.path();
-//             // println!("{}", path.display().to_string());
-//         }
-
-//         Ok(())
-//     }
-// }
+        Ok(())
+    }
+}
