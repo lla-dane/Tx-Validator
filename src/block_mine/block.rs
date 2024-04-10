@@ -103,7 +103,10 @@ pub fn valid_block_header() -> Result<()> {
         block_header.push_str(&bits_le);
         block_header.push_str(&nonce_hex);
 
-        let block_hash = hex::encode(double_sha256(&hex::decode(&block_header)?));
+        let mut block_hash_bytes = double_sha256(&hex::decode(&block_header)?);
+        block_hash_bytes.reverse();
+
+        let block_hash = hex::encode(block_hash_bytes);
 
         let block_hash_int =
             BigUint::from_str_radix(&block_hash, 16).expect("Invalid hex in block hash");
@@ -119,9 +122,9 @@ pub fn valid_block_header() -> Result<()> {
 
         nonce += 1;
 
-        if nonce % 100 == 0 {
-            println!("{}", nonce);
-        }
+        // if nonce % 100 == 0 {
+        //     println!("{}", nonce);
+        // }
     }
 
     // BLOCK HEADER
