@@ -588,80 +588,81 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                 }
             }
         }
-        // println!("TRASNACTION: VALID");
-    } else if tx_type == _p2sh {
-        for input_index in 0..tx.vin.len() {
-            match input_verification_p2sh(input_index, tx.clone()) {
-                Ok(false) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
-
-                Ok(true) => {
-                    v_result = true;
-                }
-
-                Err(_) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
-            }
-        }
-        // println!("TRASNACTION: VALID");
-    } else if tx_type == _p2wpkh {
-        for input_index in 0..tx.vin.len() {
-            match input_verification_p2wpkh(input_index, tx.clone()) {
-                Ok(false) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
-
-                Ok(true) => {
-                    v_result = true;
-                }
-
-                Err(_) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
-            }
-        }
-        // println!("TRASNACTION: VALID");
-    } else if tx_type == _p2wsh {
-        for input_index in 0..tx.vin.len() {
-            match input_verification_p2wsh(input_index, tx.clone()) {
-                Ok(false) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
-
-                Ok(true) => {
-                    v_result = true;
-                }
-
-                Err(_) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
-            }
-        }
-        // println!("TRASNACTION: VALID");
-    } else if tx_type == _p2tr {
-        // CHECK IF THE WITNESS ITEMS LENGTH IS <255
-
-        // for input in tx.vin.iter() {
-        //     let witness = input.witness.clone().unwrap();
-        //     for item in witness {
-        //         let item_bytes = hex::decode(&item)?;
-        //         if item_bytes.len() >= 255 {
-        //             // println!("*****************************************************************************************************************************");
-        //             return Ok(false);
-        //         }
-        //     }
-        // }
-
-        v_result = false;
     }
+    // println!("TRASNACTION: VALID");
+    // } else if tx_type == _p2sh {
+    //     for input_index in 0..tx.vin.len() {
+    //         match input_verification_p2sh(input_index, tx.clone()) {
+    //             Ok(false) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+
+    //             Ok(true) => {
+    //                 v_result = true;
+    //             }
+
+    //             Err(_) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+    //         }
+    //     }
+    //     // println!("TRASNACTION: VALID");
+    // } else if tx_type == _p2wpkh {
+    //     for input_index in 0..tx.vin.len() {
+    //         match input_verification_p2wpkh(input_index, tx.clone()) {
+    //             Ok(false) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+
+    //             Ok(true) => {
+    //                 v_result = true;
+    //             }
+
+    //             Err(_) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+    //         }
+    //     }
+    //     // println!("TRASNACTION: VALID");
+    // } else if tx_type == _p2wsh {
+    //     for input_index in 0..tx.vin.len() {
+    //         match input_verification_p2wsh(input_index, tx.clone()) {
+    //             Ok(false) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+
+    //             Ok(true) => {
+    //                 v_result = true;
+    //             }
+
+    //             Err(_) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+    //         }
+    //     }
+    //     // println!("TRASNACTION: VALID");
+    // } else if tx_type == _p2tr {
+    //     // CHECK IF THE WITNESS ITEMS LENGTH IS <255
+
+    //     // for input in tx.vin.iter() {
+    //     //     let witness = input.witness.clone().unwrap();
+    //     //     for item in witness {
+    //     //         let item_bytes = hex::decode(&item)?;
+    //     //         if item_bytes.len() >= 255 {
+    //     //             // println!("*****************************************************************************************************************************");
+    //     //             return Ok(false);
+    //     //         }
+    //     //     }
+    //     // }
+
+    //     v_result = false;
+    // }
 
     Ok(v_result)
 }
