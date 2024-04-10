@@ -175,8 +175,8 @@ fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
     let message =
         Message::from_digest_slice(&trimmed_tx_hash).expect("ERROR CREATING MESSAGE FROM TX_HASH");
 
-    println!("{}", message);
-    println!("{}", signature);
+    // println!("{}", message);
+    // println!("{}", signature);
 
     match secp.verify_ecdsa(&message, &signature, &public_key) {
         Ok(_) => return true,
