@@ -67,7 +67,7 @@ pub fn valid_block_header() -> Result<()> {
     let map = create_txid_tx_map()?;
     let (merkel_root, coinbase_tx, coinbase_txid, txids) = generate_roots(map.clone())?;
 
-    let time_stamp_int: u32 = 1712671823;
+    let time_stamp_int: u32 = 1712778645;
     let time_stamp = hex::encode(time_stamp_int.to_le_bytes());
 
     let target = "0000ffff00000000000000000000000000000000000000000000000000000000";
@@ -77,11 +77,6 @@ pub fn valid_block_header() -> Result<()> {
 
     let bits = target_to_compact(target);
     let bits_hex = format!("{:08x}", bits);
-
-    let mut merkel_root_bytes = hex::decode(&merkel_root)?;
-    merkel_root_bytes.reverse();
-
-    let merkel_root_le = hex::encode(merkel_root_bytes);
 
     let mut bits_in_bytes = hex::decode(&bits_hex)?;
     bits_in_bytes.reverse();
@@ -136,7 +131,6 @@ pub fn valid_block_header() -> Result<()> {
     // COINBASE TX
     // COINBASE TXID
     // REGULAR TXID
-
 
     let mut block_file = File::create("./output.txt")?;
 
