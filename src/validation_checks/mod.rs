@@ -1,14 +1,15 @@
-use std::{collections::HashMap, fs::{self}, path::Path};
+use std::{
+    collections::HashMap,
+    fs::{self},
+    path::Path,
+};
 
 use ripemd::Ripemd160;
 use secp256k1::{ecdsa::Signature, Message, PublicKey, Secp256k1};
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
-use crate::{
-    error::Result,
-    transaction::Transaction,
-};
+use crate::{error::Result, transaction::Transaction};
 
 use self::{
     p2pkh::input_verification_p2pkh, p2sh::input_verification_p2sh,
@@ -139,10 +140,15 @@ pub fn op_checkmultisig(
     let secp = Secp256k1::new();
     let mut valid_sig_count = 0;
 
+    let mut x: String = String::new();
+
     for (sig, sighash) in signatures {
         // TRIM THE TRANSACTION AS PER THE SIGHASH_TYPE
         let mut trimmed_tx = trimmed_tx(tx.clone(), tx_input_index, input_type, sighash.clone())?;
         trimmed_tx.extend(&sighash.to_le_bytes());
+
+        x = hex::encode(trimmed_tx.clone());
+
         let trimmed_tx_hash = double_sha256(&trimmed_tx);
         let msg = Message::from_digest_slice(&trimmed_tx_hash).expect("PARSING: FAILED");
 
@@ -153,6 +159,8 @@ pub fn op_checkmultisig(
             }
         }
     }
+
+    // println!("{}", x);
 
     let result;
 
@@ -719,8 +727,6 @@ pub fn all_transaction_verification() -> Result<()> {
                                 if result == true {
                                     // s_count += 1;
                                     if let Some(filename) = path.file_name() {
-                                        
-
                                         let valid_mempool_dir = Path::new("./valid-mempool");
                                         let destination_path = valid_mempool_dir.join(filename);
                                         fs::copy(&path, &destination_path)?;

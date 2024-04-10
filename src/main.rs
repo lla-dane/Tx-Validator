@@ -13,6 +13,7 @@ fn main() -> Result<()> {
     
     all_transaction_verification()?;
 
+    println!("TRANSACTION VERIFICATION: COMPLETED");
 
     valid_block_header()?;
 

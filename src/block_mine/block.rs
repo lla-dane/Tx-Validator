@@ -8,24 +8,51 @@ use crate::{block_mine::serialise_tx::double_sha256, error::Result};
 use super::{merkle_root::generate_roots, serialise_tx::create_txid_tx_map};
 
 fn target_to_compact(target_hex: &str) -> u32 {
-    let target_bytes = hex::decode(target_hex).expect("Decoding failed");
-    let non_zero_pos = target_bytes
-        .iter()
-        .position(|&x| x != 0)
-        .unwrap_or(target_bytes.len());
-    let size = target_bytes.len() - non_zero_pos;
+    // Parse the target from a hex string to a big number
+    let target_bytes = hex::decode(target_hex).expect("Invalid hex string");
+    let mut target_bytes = target_bytes.as_slice();
 
-    // Get the first three significant bytes as mantissa
-    let mut mantissa: [u8; 3] = [0; 3];
-    for (i, &byte) in target_bytes.iter().skip(non_zero_pos).take(3).enumerate() {
-        mantissa[i] = byte;
+    // Trim leading zeros
+    while let Some(&0) = target_bytes.first() {
+        target_bytes = &target_bytes[1..];
     }
 
-    // Calculate compact representation
-    let compact = ((size as u32) << 24)
-        + ((mantissa[0] as u32) << 16)
-        + ((mantissa[1] as u32) << 8)
-        + mantissa[2] as u32;
+    // Prepare the compact format
+    let size = target_bytes.len() as u32;
+    let (exp, significant) = if size <= 3 {
+        (
+            size,
+            u32::from_be_bytes(
+                [0; 1]
+                    .iter()
+                    .chain(target_bytes.iter().chain(std::iter::repeat(&0)))
+                    .take(4)
+                    .cloned()
+                    .collect::<Vec<u8>>()
+                    .try_into()
+                    .unwrap(),
+            ),
+        )
+    } else {
+        let significant_bytes = &target_bytes[0..3]; // Take the first three significant bytes
+        let significant = u32::from_be_bytes(
+            [0; 1]
+                .iter()
+                .chain(significant_bytes.iter())
+                .cloned()
+                .collect::<Vec<u8>>()
+                .try_into()
+                .unwrap(),
+        );
+        (size, significant)
+    };
+
+    // Adjust for Bitcoin's compact format specification
+    let compact = if significant & 0x00800000 != 0 {
+        (significant >> 8) | ((exp + 1) << 24)
+    } else {
+        significant | (exp << 24)
+    };
 
     compact
 }
@@ -44,9 +71,19 @@ pub fn valid_block_header() -> Result<()> {
     let time_stamp = hex::encode(time_stamp_int.to_le_bytes());
 
     let target = "0000ffff00000000000000000000000000000000000000000000000000000000";
-    let target_int = BigUint::from_str_radix(target, 16).expect("Invalid hex in block hash");
+    let target_int = BigUint::from_str_radix(target, 16).expect("INVALID HEX IN THE BLOCK");
+
+    // println!("{}", target_int);
+
     let bits = target_to_compact(target);
     let bits_hex = format!("{:08x}", bits);
+
+    let mut bits_in_bytes = hex::decode(&bits_hex)?;
+    bits_in_bytes.reverse();
+
+    let bits_le = hex::encode(bits_in_bytes);
+
+    println!("{}", bits_le);
 
     let mut nonce: u32 = 0;
 
@@ -63,7 +100,7 @@ pub fn valid_block_header() -> Result<()> {
         block_header.push_str(&prev_block_hash);
         block_header.push_str(&merkel_root);
         block_header.push_str(&time_stamp);
-        block_header.push_str(&bits_hex);
+        block_header.push_str(&bits_le);
         block_header.push_str(&nonce_hex);
 
         let block_hash = hex::encode(double_sha256(&hex::decode(&block_header)?));
@@ -72,15 +109,19 @@ pub fn valid_block_header() -> Result<()> {
             BigUint::from_str_radix(&block_hash, 16).expect("Invalid hex in block hash");
 
         if block_hash_int <= target_int {
-            // println!("Valid nonce found: {}", nonce);
-            // println!("Block header: {}", block_header);
-            // println!("Hash: {}", block_hash);
+            println!("Valid nonce found: {}", nonce);
+            println!("Block header: {}", block_header);
+            println!("Hash: {}", block_hash);
 
             valid_block_header = block_header;
             break;
         }
 
         nonce += 1;
+
+        if nonce % 100 == 0 {
+            println!("{}", nonce);
+        }
     }
 
     // BLOCK HEADER
@@ -113,7 +154,7 @@ mod test {
 
     #[test]
     fn block_test() -> Result<()> {
-        // valid_block_header();
+        valid_block_header();
 
         Ok(())
     }
