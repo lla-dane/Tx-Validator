@@ -103,7 +103,7 @@ pub fn valid_block_header() -> Result<()> {
 
         block_header.push_str(&version);
         block_header.push_str(&prev_block_hash);
-        block_header.push_str(&merkel_root_le);
+        block_header.push_str(&merkel_root);
         block_header.push_str(&time_stamp);
         block_header.push_str(&bits_le);
         block_header.push_str(&nonce_hex);
