@@ -590,9 +590,29 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //     }
     // }
     // println!("TRASNACTION: VALID");
-     if tx_type == _p2sh {
+    //  if tx_type == _p2sh {
+    //     for input_index in 0..tx.vin.len() {
+    //         match input_verification_p2sh(input_index, tx.clone()) {
+    //             Ok(false) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+
+    //             Ok(true) => {
+    //                 v_result = true;
+    //             }
+
+    //             Err(_) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+    //         }
+    //     }
+    // }
+    //     // println!("TRASNACTION: VALID");
+    if tx_type == _p2wpkh {
         for input_index in 0..tx.vin.len() {
-            match input_verification_p2sh(input_index, tx.clone()) {
+            match input_verification_p2wpkh(input_index, tx.clone()) {
                 Ok(false) => {
                     // println!("TRASNACTION: INVALID");
                     return Ok(false);
@@ -609,25 +629,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
             }
         }
     }
-    //     // println!("TRASNACTION: VALID");
-    // } else if tx_type == _p2wpkh {
-    //     for input_index in 0..tx.vin.len() {
-    //         match input_verification_p2wpkh(input_index, tx.clone()) {
-    //             Ok(false) => {
-    //                 // println!("TRASNACTION: INVALID");
-    //                 return Ok(false);
-    //             }
-
-    //             Ok(true) => {
-    //                 v_result = true;
-    //             }
-
-    //             Err(_) => {
-    //                 // println!("TRASNACTION: INVALID");
-    //                 return Ok(false);
-    //             }
-    //         }
-    //     }
     //     // println!("TRASNACTION: VALID");
     // } else if tx_type == _p2wsh {
     //     for input_index in 0..tx.vin.len() {
