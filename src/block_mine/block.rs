@@ -140,7 +140,12 @@ pub fn valid_block_header() -> Result<()> {
     writeln!(block_file, "{}", coinbase_tx)?;
 
     for txid in txids {
-        writeln!(block_file, "{}", txid)?;
+        let mut txid_bytes_le = hex::decode(&txid)?;
+        txid_bytes_le.reverse();
+
+        let txid_le = hex::encode(txid_bytes_le);
+
+        writeln!(block_file, "{}", txid_le)?;
     }
 
     Ok(())
