@@ -642,21 +642,21 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
             }
         }
     }
-    // if tx_type == _p2tr {
-    //     // CHECK IF THE WITNESS ITEMS LENGTH IS <255
+    if tx_type == _p2tr {
+        // CHECK IF THE WITNESS ITEMS LENGTH IS <255
 
-    //     for input in tx.vin.iter() {
-    //         let witness = input.witness.clone().unwrap();
-    //         for item in witness {
-    //             let item_bytes = hex::decode(&item)?;
-    //             if item_bytes.len() >= 255 {
-    //                 return Ok(false);
-    //             }
-    //         }
-    //     }
+        for input in tx.vin.iter() {
+            let witness = input.witness.clone().unwrap();
+            for item in witness {
+                let item_bytes = hex::decode(&item)?;
+                if item_bytes.len() >= 255 {
+                    return Ok(false);
+                }
+            }
+        }
 
-    //     v_result = true;
-    // }
+        v_result = true;
+    }
 
     Ok(v_result)
 }
