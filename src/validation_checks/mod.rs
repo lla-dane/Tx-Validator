@@ -642,21 +642,21 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
             }
         }
     }
-    if tx_type == _p2tr {
-        // CHECK IF THE WITNESS ITEMS LENGTH IS <255
+    // if tx_type == _p2tr {
+    //     // CHECK IF THE WITNESS ITEMS LENGTH IS <255
 
-        for input in tx.vin.iter() {
-            let witness = input.witness.clone().unwrap();
-            for item in witness {
-                let item_bytes = hex::decode(&item)?;
-                if item_bytes.len() >= 255 {
-                    return Ok(false);
-                }
-            }
-        }
+    //     for input in tx.vin.iter() {
+    //         let witness = input.witness.clone().unwrap();
+    //         for item in witness {
+    //             let item_bytes = hex::decode(&item)?;
+    //             if item_bytes.len() >= 255 {
+    //                 return Ok(false);
+    //             }
+    //         }
+    //     }
 
-        v_result = true;
-    }
+    //     v_result = true;
+    // }
 
     Ok(v_result)
 }
@@ -721,7 +721,7 @@ pub fn all_transaction_verification() -> Result<()> {
 
                                 if result == true {
                                     // s_count += 1;
-                                    println!("SUCCESSFULL");
+                                    // println!("SUCCESSFULL");
                                     if let Some(filename) = path.file_name() {
                                         let valid_mempool_dir = Path::new("./valid-mempool");
                                         let destination_path = valid_mempool_dir.join(filename);
@@ -729,7 +729,7 @@ pub fn all_transaction_verification() -> Result<()> {
                                     }
                                 } else {
                                     // f_count += 1;
-                                    println!("FAILED");
+                                    // println!("FAILED");
                                 }
 
                                 // println!("\n\n");
