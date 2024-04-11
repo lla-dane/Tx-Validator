@@ -9,7 +9,7 @@ use super::serialise_tx::double_sha256;
 pub fn generate_roots(
     map: Vec<(String, Transaction, String, usize, u64)>,
 ) -> Result<(String, String, String, Vec<String>)> {
-    let tx_weight_limit = 3000000;
+    let tx_weight_limit = 3992000;
     let mut current_tx_weight = 0;
     let mut txids: Vec<String> = Vec::new();
     let mut wtxids: Vec<String> = Vec::new();
