@@ -578,17 +578,8 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                     return Ok(false);
                 }
                 Ok(true) => {
-                    if tx.vin[0].txid
-                        == "acc3ba00869acb582a3f2904ce3a11dd3779350ce234063fc7d0959246213364"
-                            .to_string()
-                        || tx.vin[0].txid
-                            == "75030761cb3f55f39727acc17ca9eaad7ccb1f30fe8aac0299d8f24995f38bb7"
-                                .to_string()
-                    {
-                        v_result = true;
-                    } else {
-                        v_result = false;
-                    }
+                    
+                    v_result = true;
                 }
                 Err(_) => {
                     // println!("TRASNACTION: INVALID");
@@ -605,9 +596,11 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //                 // println!("TRASNACTION: INVALID");
     //                 return Ok(false);
     //             }
+
     //             Ok(true) => {
     //                 v_result = true;
     //             }
+
     //             Err(_) => {
     //                 // println!("TRASNACTION: INVALID");
     //                 return Ok(false);
@@ -627,6 +620,7 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //             Ok(true) => {
     //                 v_result = true;
     //             }
+
     //             Err(_) => {
     //                 // println!("TRASNACTION: INVALID");
     //                 return Ok(false);
@@ -646,6 +640,7 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //             Ok(true) => {
     //                 v_result = true;
     //             }
+
     //             Err(_) => {
     //                 // println!("TRASNACTION: INVALID");
     //                 return Ok(false);
@@ -653,7 +648,7 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //         }
     //     }
     //     // println!("TRASNACTION: VALID");
-    // if tx_type == _p2tr {
+    //  if tx_type == _p2tr {
     //     // CHECK IF THE WITNESS ITEMS LENGTH IS <255
 
     //     for input in tx.vin.iter() {
@@ -661,13 +656,14 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //         for item in witness {
     //             let item_bytes = hex::decode(&item)?;
     //             if item_bytes.len() >= 255 {
-    //                 // println!("*****************************************************************************************************************************");
     //                 return Ok(false);
     //             }
     //         }
     //     }
+
     //     v_result = true;
     // }
+
 
     Ok(v_result)
 }

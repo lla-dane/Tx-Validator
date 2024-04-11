@@ -1,4 +1,4 @@
-use std::fs;
+use std::{cmp::Reverse, fs};
 
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
@@ -96,7 +96,8 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
         // INPUTS
         for input in tx.vin.iter() {
             // TXID REVERSED
-            let txid = hex::decode(&input.txid.clone())?;
+            let mut txid = hex::decode(&input.txid.clone())?;
+            txid.reverse();
             // SCRIPT SIG
             let script_sig = hex::decode(&input.scriptsig.clone().unwrap())?;
             let script_sig_len = script_sig.len();
@@ -165,7 +166,8 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
         // INPUTS
         for input in tx.vin.iter() {
             // TXID REVERSED
-            let txid = hex::decode(&input.txid.clone())?;
+            let mut txid = hex::decode(&input.txid.clone())?;
+            txid.reverse();
 
             // SCRIPT SIG
             let script_sig = hex::decode(&input.scriptsig.clone().unwrap())?;
@@ -271,7 +273,7 @@ mod test {
     #[test]
     fn test2() -> Result<()> {
         let path =
-            "./mempool/0b9e15adfefab6416bef64ca1fa37516f89f7d8cd106103c67c6f55a3c7565ad.json";
+            "./mempool/257b27a95b43a549c8f9721383641130ca01eb555fedf80b7ad0ae7c9ef5116c.json";
 
         // Read the JSON file
         let data = fs::read_to_string(path).expect("Unable to read file");
