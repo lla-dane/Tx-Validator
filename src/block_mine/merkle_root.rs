@@ -34,9 +34,6 @@ pub fn generate_roots(
     //     writeln!(wtxid_file, "{}", wtxid)?;
     // }
 
-    println!("{}---------------------", wtxids.len());
-    println!("{}---------------------", txids.len());
-
     let witness_root_hash = merkel_root(wtxids)?;
 
     // println!("{}", witness_root_hash);
@@ -49,9 +46,6 @@ pub fn generate_roots(
     let coinbase_txid = hex::encode(coinbase_txid_bytes);
 
     txids.insert(0, coinbase_txid.clone());
-
-    println!("{}````````", txids[0]);
-    println!("{}```````", txids[1]);
 
     let merkel_root = merkel_root(txids.clone())?;
 
@@ -95,43 +89,6 @@ fn merkel_root(txids: Vec<String>) -> Result<String> {
 }
 
 pub fn create_coinbase(witness_root_hash: String, block_subsidy: u64) -> Result<(String, String)> {
-    /*
-    VERSION
-    INPUT COUNT:
-    INPUTS [
-        {
-            TXID:
-            VOUT
-            SCRIPT SIG SIZE
-            SCRIPT SIG
-            SEQUENCE
-        }
-    ]
-    OUTPUT COUNT:
-    OUTPUT [
-    1:    {
-            AMOUNT:
-            SCRIPT PUB KEY SIZE
-            SCRIPT PUB KEY
-        }
-    2:  {
-            AMOUNT:
-            SCRIPT PUB KEY SIZE
-            SCRIPT PUB KEY
-        }
-    ]
-    WITNESS [\
-        {
-            STACK ELEMENTS
-            {
-                SIZE
-                ITEM
-            }
-        }
-    ]
-    LOCKTIME
-     */
-
     let mut coinbase_tx = String::new();
     let mut txid_coinbase_tx = String::new();
 

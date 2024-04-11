@@ -564,8 +564,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
 
     for input_index in 0..tx.vin.len() {
         if tx.vin[input_index].prevout.scriptpubkey_type != tx_type {
-            // println!("TRANSACTION ADDRESS: INVALID");
-            // println!("{}", tx.vin[0].txid);
             return Ok(false);
         }
     }
@@ -578,7 +576,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                     return Ok(false);
                 }
                 Ok(true) => {
-                    
                     v_result = true;
                 }
                 Err(_) => {
@@ -588,27 +585,25 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
             }
         }
     }
-    // println!("TRASNACTION: VALID");
-    //  if tx_type == _p2sh {
-    //     for input_index in 0..tx.vin.len() {
-    //         match input_verification_p2sh(input_index, tx.clone()) {
-    //             Ok(false) => {
-    //                 // println!("TRASNACTION: INVALID");
-    //                 return Ok(false);
-    //             }
+    if tx_type == _p2sh {
+        for input_index in 0..tx.vin.len() {
+            match input_verification_p2sh(input_index, tx.clone()) {
+                Ok(false) => {
+                    // println!("TRASNACTION: INVALID");
+                    return Ok(false);
+                }
 
-    //             Ok(true) => {
-    //                 v_result = true;
-    //             }
+                Ok(true) => {
+                    v_result = true;
+                }
 
-    //             Err(_) => {
-    //                 // println!("TRASNACTION: INVALID");
-    //                 return Ok(false);
-    //             }
-    //         }
-    //     }
-    // }
-    //     // println!("TRASNACTION: VALID");
+                Err(_) => {
+                    // println!("TRASNACTION: INVALID");
+                    return Ok(false);
+                }
+            }
+        }
+    }
     if tx_type == _p2wpkh {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2wpkh(input_index, tx.clone()) {
@@ -628,42 +623,40 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
             }
         }
     }
-    //     // println!("TRASNACTION: VALID");
-    // } else if tx_type == _p2wsh {
-    //     for input_index in 0..tx.vin.len() {
-    //         match input_verification_p2wsh(input_index, tx.clone()) {
-    //             Ok(false) => {
-    //                 // println!("TRASNACTION: INVALID");
-    //                 return Ok(false);
-    //             }
+    if tx_type == _p2wsh {
+        for input_index in 0..tx.vin.len() {
+            match input_verification_p2wsh(input_index, tx.clone()) {
+                Ok(false) => {
+                    // println!("TRASNACTION: INVALID");
+                    return Ok(false);
+                }
 
-    //             Ok(true) => {
-    //                 v_result = true;
-    //             }
+                Ok(true) => {
+                    v_result = true;
+                }
 
-    //             Err(_) => {
-    //                 // println!("TRASNACTION: INVALID");
-    //                 return Ok(false);
-    //             }
-    //         }
-    //     }
-    //     // println!("TRASNACTION: VALID");
-    //  if tx_type == _p2tr {
-    //     // CHECK IF THE WITNESS ITEMS LENGTH IS <255
+                Err(_) => {
+                    // println!("TRASNACTION: INVALID");
+                    return Ok(false);
+                }
+            }
+        }
+    }
+    if tx_type == _p2tr {
+        // CHECK IF THE WITNESS ITEMS LENGTH IS <255
 
-    //     for input in tx.vin.iter() {
-    //         let witness = input.witness.clone().unwrap();
-    //         for item in witness {
-    //             let item_bytes = hex::decode(&item)?;
-    //             if item_bytes.len() >= 255 {
-    //                 return Ok(false);
-    //             }
-    //         }
-    //     }
+        for input in tx.vin.iter() {
+            let witness = input.witness.clone().unwrap();
+            for item in witness {
+                let item_bytes = hex::decode(&item)?;
+                if item_bytes.len() >= 255 {
+                    return Ok(false);
+                }
+            }
+        }
 
-    //     v_result = true;
-    // }
-
+        v_result = true;
+    }
 
     Ok(v_result)
 }
