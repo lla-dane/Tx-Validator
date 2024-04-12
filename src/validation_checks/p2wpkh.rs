@@ -24,7 +24,7 @@ fn script_execution_p2wpkh(
 
     if tx.vin[tx_input_index].scriptsig.clone().unwrap().len() != 0 {
         return Ok(false);
-    } 
+    }
 
     let input_type = "P2WPKH";
 
@@ -92,6 +92,25 @@ mod test {
 
         // println!("success: {}", s_count);
         // println!("failure: {}", f_count);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test2() -> Result<()> {
+        let path =
+            "./mempool/fcc4d2ad88b7a040dc98ae29946b794258ae7c8ba1a4300a6fc761d0c9cb6a1f.json";
+
+        // Read the JSON file
+        let data = fs::read_to_string(path).expect("Unable to read file");
+
+        // Deserialize JSON into Rust data structures
+        let transaction: Transaction = serde_json::from_str(&data)?;
+
+        let tx = transaction.clone();
+        let result = script_execution_p2wpkh(tx.vin[0].witness.clone().unwrap(), tx, 0)?;
+
+        println!("{}", result);
 
         Ok(())
     }

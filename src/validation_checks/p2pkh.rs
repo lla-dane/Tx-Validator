@@ -164,6 +164,8 @@ fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
 
     // println!("{}", hex::encode(trimmed_tx.clone()));
 
+    // println!("{}", hex::encode(trimmed_tx.clone()));
+
     let trimmed_tx_hash = double_sha256(&trimmed_tx);
     let signature_bytes = hex::decode(signature).expect("DECODING: FAILED");
     let pubkey_bytes = hex::decode(pubkey).expect("DECODING: FAILED");
@@ -179,7 +181,10 @@ fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
     // println!("{}", signature);
 
     match secp.verify_ecdsa(&message, &signature, &public_key) {
-        Ok(_) => return true,
+        Ok(_) => {
+            println!("SIGNATURE: VALID");
+            return true;
+        }
         Err(_) => return false,
     }
 }
@@ -246,7 +251,7 @@ mod test {
                                         f_count += 1;
                                     }
 
-                                    println!("\n\n");
+                                    // println!("\n\n");
                                 }
                             }
                             Err(e) => {
@@ -268,7 +273,7 @@ mod test {
     #[test]
     fn test2() -> Result<()> {
         let path =
-            "./mempool/0ac528562a1626863c0cb912eb725530c54e786e6485380c16633e4b9bce1720.json";
+            "./mempool/01f16e8312f9c882e869d31a3ab386b94a38f6091f7e947c6f2ed2b3389f4406.json";
 
         // Read the JSON file
         let data = fs::read_to_string(path).expect("Unable to read file");
