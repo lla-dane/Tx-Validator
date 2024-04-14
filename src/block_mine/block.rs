@@ -67,7 +67,7 @@ pub fn valid_block_header() -> Result<()> {
     let map = create_txid_tx_map()?;
     let (merkel_root, coinbase_tx, coinbase_txid, txids) = generate_roots(map.clone())?;
 
-    let time_stamp_int: u32 = 1713088152;
+    let time_stamp_int: u32 = 1713107152;
     let time_stamp = hex::encode(time_stamp_int.to_le_bytes());
 
     let target = "0000ffff00000000000000000000000000000000000000000000000000000000";
