@@ -182,7 +182,7 @@ fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
 
     match secp.verify_ecdsa(&message, &signature, &public_key) {
         Ok(_) => {
-            println!("SIGNATURE: VALID");
+            // println!("SIGNATURE: VALID");
             return true;
         }
         Err(_) => return false,
