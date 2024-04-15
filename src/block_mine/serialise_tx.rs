@@ -41,7 +41,9 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
                             // Find the correct position to insert the transaction based on its fees
                             let position = map
                                 .iter()
-                                .position(|(_, _, _, _, gas_fees)| fees > *gas_fees)
+                                .position(|(_, _, _, net_weight, gas_fees)| {
+                                    fees / tx_weight as u64 > *gas_fees / (*net_weight as u64)
+                                })
                                 .unwrap_or(map.len());
                             map.insert(position, (txid, transaction, wtxid, tx_weight, fees));
                         }
