@@ -585,31 +585,31 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
             }
         }
     }
-    if tx_type == _p2sh {
-        if tx.vin[0].witness != None {
-            if tx.vin[0].witness.clone().unwrap().len() > 2 {
-                return Ok(false);
-            }
-        }
+    // if tx_type == _p2sh {
+    //     if tx.vin[0].witness != None {
+    //         if tx.vin[0].witness.clone().unwrap().len() > 2 {
+    //             return Ok(false);
+    //         }
+    //     }
 
-        for input_index in 0..tx.vin.len() {
-            match input_verification_p2sh(input_index, tx.clone()) {
-                Ok(false) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
+    //     for input_index in 0..tx.vin.len() {
+    //         match input_verification_p2sh(input_index, tx.clone()) {
+    //             Ok(false) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
 
-                Ok(true) => {
-                    v_result = true;
-                }
+    //             Ok(true) => {
+    //                 v_result = true;
+    //             }
 
-                Err(_) => {
-                    // println!("TRASNACTION: INVALID");
-                    return Ok(false);
-                }
-            }
-        }
-    }
+    //             Err(_) => {
+    //                 // println!("TRASNACTION: INVALID");
+    //                 return Ok(false);
+    //             }
+    //         }
+    //     }
+    // }
     if tx_type == _p2wpkh {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2wpkh(input_index, tx.clone()) {
@@ -685,7 +685,7 @@ fn gas_fees_check(tx: &Transaction) -> bool {
         r_sats += tx.vout[output_index].value;
     }
 
-    if s_sats - r_sats < 2000 {
+    if s_sats - r_sats < 1500 {
         return false;
     } else {
         return true;

@@ -134,18 +134,6 @@ pub fn valid_block_header() -> Result<()> {
 
     let mut block_file = File::create("./output.txt")?;
 
-    let mut weight_t = 0;
-    let mut fees_t = 0;
-
-    for txid_tx in txids.clone() {
-        for (txid, _, _, weight, fees) in map.clone() {
-            if txid == txid_tx {
-                weight_t += weight;
-                fees_t += fees;
-            }
-        }
-    }
-
     println!("{}", txids.len());
 
     writeln!(block_file, "{}", valid_block_header)?;
@@ -154,9 +142,6 @@ pub fn valid_block_header() -> Result<()> {
     for txid in txids {
         writeln!(block_file, "{}", txid)?;
     }
-
-    println!("weight: {}", weight_t);
-    println!("fees: {}", fees_t);
 
     Ok(())
 }
