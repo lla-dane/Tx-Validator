@@ -679,7 +679,7 @@ fn gas_fees_check(tx: &Transaction) -> bool {
         r_sats += tx.vout[output_index].value;
     }
 
-    if s_sats - r_sats < 1500 {
+    if s_sats - r_sats < 2000 {
         return false;
     } else {
         return true;
