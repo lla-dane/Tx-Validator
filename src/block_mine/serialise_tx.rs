@@ -41,8 +41,8 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
                             // Find the correct position to insert the transaction based on its fees
                             let position = map
                                 .iter()
-                                .position(|(_, _, _, _, gas_fees)| {
-                                    fees > *gas_fees
+                                .position(|(_, _, _, net_weight, gas_fees)| {
+                                    fees / tx_weight as u64 > *gas_fees / (*net_weight as u64)
                                 })
                                 .unwrap_or(map.len());
                             map.insert(position, (txid, transaction, wtxid, tx_weight, fees));
@@ -115,7 +115,7 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
 
         // OUTPUT COUNT
 
-        if tx.vout.len() >= 50 {
+        if tx.vout.len() >= 200 {
             return Ok((false, Vec::new(), Vec::new(), 0, 0));
         }
 
@@ -157,9 +157,9 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
         witness_bytes += 1 + 1;
 
         // INPUT COUNT
-        // if tx.vin.len() >= 50 {
-        //     return Ok((false, Vec::new(), Vec::new(), 0, 0));
-        // }
+        if tx.vin.len() >= 200 {
+            return Ok((false, Vec::new(), Vec::new(), 0, 0));
+        }
         raw_tx.push(tx.vin.len().try_into()?);
         raw_wtx.push(tx.vin.len().try_into()?);
 
@@ -224,9 +224,9 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
 
             non_witness_bytes += 8;
 
-            // if scriptpubkey.len() >= 50 {
-            //     return Ok((false, Vec::new(), Vec::new(), 0, 0));
-            // }
+            if scriptpubkey.len() >= 50 {
+                return Ok((false, Vec::new(), Vec::new(), 0, 0));
+            }
             raw_tx.push(scriptpubkey.len().try_into()?);
             raw_wtx.push(scriptpubkey.len().try_into()?);
             raw_tx.extend_from_slice(&scriptpubkey);
