@@ -1,4 +1,5 @@
 use std::{fs::File, io::Write};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use num_bigint::BigUint;
 use num_traits::Num;
@@ -67,7 +68,10 @@ pub fn valid_block_header() -> Result<()> {
     let map = create_txid_tx_map()?;
     let (merkel_root, coinbase_tx, coinbase_txid, txids) = generate_roots(map.clone())?;
 
-    let time_stamp_int: u32 = 1713276373;
+    let current_time = SystemTime::now();
+    let since_epoch = current_time.duration_since(UNIX_EPOCH).unwrap();
+    let time_stamp_int = since_epoch.as_secs() as u32; // Get the Unix timestamp as a u32
+
     let time_stamp = hex::encode(time_stamp_int.to_le_bytes());
 
     let target = "0000ffff00000000000000000000000000000000000000000000000000000000";
