@@ -1,5 +1,5 @@
-use std::{fs::File, io::Write};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fs::File, io::Write};
 
 use num_bigint::BigUint;
 use num_traits::Num;
@@ -8,6 +8,7 @@ use crate::{block_mine::serialise_tx::double_sha256, error::Result};
 
 use super::{merkle_root::generate_roots, serialise_tx::create_txid_tx_map};
 
+// COVERTS THE HEX REPRESENTATION TO COMPACT REPRESENTATION
 fn target_to_compact(target_hex: &str) -> u32 {
     // Parse the target from a hex string to a big number
     let target_bytes = hex::decode(target_hex).expect("Invalid hex string");
@@ -58,43 +59,40 @@ fn target_to_compact(target_hex: &str) -> u32 {
     compact
 }
 
+// CREATE A VAALID BLOCK HEADER USING PROOF OF WORK
 pub fn valid_block_header() -> Result<()> {
+    // VERSION
     let version_int: u32 = 4;
     let version = hex::encode(version_int.to_le_bytes());
 
+    // PREVIOUS BLOCK HASH
     let prev_block_hash =
         "0000000000000000000000000000000000000000000000000000000000000000".to_string();
 
     let map = create_txid_tx_map()?;
-    let (merkel_root, coinbase_tx, coinbase_txid, txids) = generate_roots(map.clone())?;
+    let (merkel_root, coinbase_tx, _, txids) = generate_roots(map.clone())?;
 
+    // TIME STAMP
     let current_time = SystemTime::now();
     let since_epoch = current_time.duration_since(UNIX_EPOCH).unwrap();
-    let time_stamp_int = since_epoch.as_secs() as u32; // Get the Unix timestamp as a u32
-
+    let time_stamp_int = since_epoch.as_secs() as u32;
     let time_stamp = hex::encode(time_stamp_int.to_le_bytes());
 
+    // TARGET BITS
     let target = "0000ffff00000000000000000000000000000000000000000000000000000000";
     let target_int = BigUint::from_str_radix(target, 16).expect("INVALID HEX IN THE BLOCK");
-
-    // println!("{}", target_int);
-
     let bits = target_to_compact(target);
     let bits_hex = format!("{:08x}", bits);
-
     let mut bits_in_bytes = hex::decode(&bits_hex)?;
     bits_in_bytes.reverse();
-
     let bits_le = hex::encode(bits_in_bytes);
 
-    // println!("{}", bits_le);
-
+    // NONCE
     let mut nonce: u32 = 0;
-
-    // let nonce_max: u32 = 4294967295;
 
     let valid_block_header: String;
 
+    // POW LOGIC
     loop {
         let nonce_hex = hex::encode(nonce.to_le_bytes());
 
@@ -117,18 +115,11 @@ pub fn valid_block_header() -> Result<()> {
 
         if block_hash_int <= target_int {
             println!("Valid nonce found: {}", nonce);
-            // println!("Block header: {}", block_header);
-            // println!("Hash: {}", block_hash);
-
             valid_block_header = block_header;
             break;
         }
 
         nonce += 1;
-
-        // if nonce % 100 == 0 {
-        //     println!("{}", nonce);
-        // }
     }
 
     // BLOCK HEADER
@@ -136,6 +127,7 @@ pub fn valid_block_header() -> Result<()> {
     // COINBASE TXID
     // REGULAR TXID
 
+    // PUT THE BLOCK HEADER, COINBASE TX, AND TXIDS IN THE OUTPUT.TXT FILE
     let mut block_file = File::create("./output.txt")?;
 
     println!("{}", txids.len());
@@ -148,17 +140,4 @@ pub fn valid_block_header() -> Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-
-mod test {
-    use super::*;
-
-    #[test]
-    fn block_test() -> Result<()> {
-        valid_block_header();
-
-        Ok(())
-    }
 }

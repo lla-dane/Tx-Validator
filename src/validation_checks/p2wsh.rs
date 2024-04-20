@@ -404,7 +404,6 @@ fn script_execution_p2wsh(
                                 }
                                 index += opcode as usize;
                             }
-                            // println!("{:?}", stack);
                         }
 
                         136 => {
@@ -530,7 +529,6 @@ fn script_execution_p2wsh(
                         }
 
                         104 => {
-                            // println!("OP_NOTIF: SUCCESSFULL");
                             break;
                         }
 
@@ -546,6 +544,7 @@ fn script_execution_p2wsh(
     Ok(script_result)
 }
 
+// TO TEST MY CODE DURING DEVELOPMENT
 #[cfg(test)]
 mod test {
     use std::fs;
@@ -586,12 +585,11 @@ mod test {
                                     // println!("\n\n");
                                 }
                             }
-                            Err(e) => {
-                                // println!("Failed to parse JSON: {}", e);
+                            Err(_) => {
                             }
                         }
                     }
-                    Err(e) => {}
+                    Err(_) => {}
                 }
             }
         }
@@ -622,109 +620,3 @@ mod test {
     }
 }
 
-//         let dummy_tx: Transaction = Transaction {
-//     version: 2,
-//     locktime: 538770804,
-//     vin: vec![
-//         Input {
-//             txid: "b7e74d40d17b1a3372f18b1f9738e4c2c8a0118f90de248b669eea2c13a350a5".to_string(),
-//             vout: 0,
-//             prevout: Prevout {
-//                 scriptpubkey: "00209adf8dd8a29f549657d2bf31dcb3dfefc50a4005dc49d636ce29e6198d6603a1".to_string(),
-//                 scriptpubkey_asm: "OP_0 OP_PUSHBYTES_32 9adf8dd8a29f549657d2bf31dcb3dfefc50a4005dc49d636ce29e6198d6603a1".to_string(),
-//                 scriptpubkey_type: "v0_p2wsh".to_string(),
-//                 scriptpubkey_address: "bc1qnt0cmk9zna2fv47jhucaev7lalzs5sq9m3yavdkw98npnrtxqwss9d24pw".to_string(),
-//                 value: 30000,
-//             },
-//             scriptsig: Some("".to_string()),
-//             scriptsig_asm: Some("".to_string()),
-//             witness: Some(vec![
-//                 "".to_string(),
-//                 "304402204f0ea1a9dc61dccd8874bd420060929cc21dd0b6ea2ddcd1fb8dabcc2ff532ca0220546baccc94c63cf8ad913763ec0dd7602837f71f4271087ebc3884e400b3ff7e01".to_string(),
-//                 "30440220039d97d571c96440de1a49a1f05cca88b5ad53271af9d5a77e93f2b548185851022053afd5412cf025868e313281ebc74348766e9edeb594a7bfb5eb745f4d73a4b201".to_string(),
-//                 "52210241138f9570c0cf7a91ed8f60b28ada6c77e6203339f0d13ae41fc431e25763492102944259faa6a3bc5c4403b55c8675e063ec00665e37c050808a18645010ec39f952ae".to_string(),
-//             ]),
-//             is_coinbase: false,
-//             sequence: 2162938768,
-//             inner_redeemscript_asm: None,
-//         },
-//         // Add second input here
-//     ],
-//     vout: vec![
-//         Output {
-//             scriptpubkey: "0020b641fec4ab9990c569429ac4e4194530513a088742d9cefb60aa5437a72f38e7".to_string(),
-//             scriptpubkey_asm: "OP_0 OP_PUSHBYTES_32 b641fec4ab9990c569429ac4e4194530513a088742d9cefb60aa5437a72f38e7".to_string(),
-//             scriptpubkey_type: "v0_p2wsh".to_string(),
-//             scriptpubkey_address: Some("bc1qkeqla39tnxgv262zntzwgx29xpgn5zy8gtvua7mq4f2r0fe08rnsrxh0zl".to_string()),
-//             value: 330,
-//         },
-//         Output {
-//             scriptpubkey: "0020fa0344234fbe1131f5d2570b5a4c0a3a11fcf0220c13585ca569e8551c1bc6aa".to_string(),
-//             scriptpubkey_asm: "OP_0 OP_PUSHBYTES_32 fa0344234fbe1131f5d2570b5a4c0a3a11fcf0220c13585ca569e8551c1bc6aa".to_string(),
-//             scriptpubkey_type: "v0_p2wsh".to_string(),
-//             scriptpubkey_address: Some("bc1qlgp5gg60hcgnrawj2u945nq28ggleupzpsf4sh99d85928qmc64q0y87ku".to_string()),
-//             value: 330,
-//         },
-//         Output {
-//             scriptpubkey: "0020f2d8d646a643eda05a075c42cab2ba8a19b865032ee7fb1350f2effa6b88aa13".to_string(),
-//             scriptpubkey_asm: "OP_0 OP_PUSHBYTES_32 f2d8d646a643eda05a075c42cab2ba8a19b865032ee7fb1350f2effa6b88aa13".to_string(),
-//             scriptpubkey_type: "v0_p2wsh".to_string(),
-//             scriptpubkey_address: Some("bc1q7tvdv34xg0k6qks8t3pv4v463gvmsegr9mnlky6s7thl56ug4gfsmyeqg3".to_string()),
-//             value: 600,
-//         },
-//         Output {
-//             scriptpubkey: "00201b1c47adaacd9027e6364be10fd43f1bb412485a0f37e0467ab4e22f5177225b".to_string(),
-//             scriptpubkey_asm: "OP_0 OP_PUSHBYTES_32 1b1c47adaacd9027e6364be10fd43f1bb412485a0f37e0467ab4e22f5177225b".to_string(),
-//             scriptpubkey_type: "v0_p2wsh".to_string(),
-//             scriptpubkey_address: Some("bc1qrvwy0td2ekgz0e3kf0ssl4plrw6pyjz6pum7q3n6kn3z75thyfds0mvrfe".to_string()),
-//             value: 6400,
-//         },
-//         Output {
-//             scriptpubkey: "00209c54e1227261a605645b8dd297581a03dbcaa79b84298ff10baca8889959ba1a".to_string(),
-//             scriptpubkey_asm: "OP_0 OP_PUSHBYTES_32 9c54e1227261a605645b8dd297581a03dbcaa79b84298ff10baca8889959ba1a".to_string(),
-//             scriptpubkey_type: "v0_p2wsh".to_string(),
-//             scriptpubkey_address: Some("bc1qn32wzgnjvxnq2ezm3hffwkq6q0du4fumss5clugt4j5g3x2ehgdqjeq2pq".to_string()),
-//             value: 19100,
-//         },
-//     ]
-// };
-
-//         let dummy_tx: Transaction = Transaction {
-//     version: 1,
-//     locktime: 0,
-//     vin: vec![
-//         Input {
-//             txid: "8502bc65a8e9b11996a912da4eb42378c57b6a89a0c940422a9e61e62e5932e1".to_string(),
-//             vout: 0,
-//             prevout: Prevout {
-//                 scriptpubkey: "002032cf73321cba9ba880807cd10cc9d58d73b25a8b1e9910662ece538e6ed6860f".to_string(),
-//                 scriptpubkey_asm: "OP_0 OP_PUSHBYTES_32 32cf73321cba9ba880807cd10cc9d58d73b25a8b1e9910662ece538e6ed6860f".to_string(),
-//                 scriptpubkey_type: "v0_p2wsh".to_string(),
-//                 scriptpubkey_address: "bc1qxt8hxvsuh2d63qyq0ngsejw434emyk5tr6v3qe3weefcumkksc8s40skt0".to_string(),
-//                 value: 7320,
-//             },
-//             scriptsig: Some("".to_string()),
-//             scriptsig_asm: Some("".to_string()),
-//             witness: Some(vec![
-//                 "9ace113fc000919095b4fedd321e560cd14652ce208ed5bfdf43c4c6015211ad".to_string(),
-//                 "3045022100aaa95ed8cf4d2e2a5c7d1d38fa18b12a0af4a3a699cd28e6d8081dd1984a625402202e8978041cb6005a43274bf96322f2add910643bcc9b8862be25dee1eedf20d301".to_string(),
-//                 "3045022100ecd9f8e3fcb94bbefa00ba8833ad3bf04e8e156cbb7649c50b17e983e70782c602204c412b7b69650d7fda78666994b0856a72eeafccfd288a71b79d63fd28c77e1301".to_string(),
-//                 "2103c9cdeed621eeb531138e1910c7a318f4a0f9fa2d24c5094b5f973cbe743f901cac6476a914bc931f3a7bcf1dd3ec0372cad56d7f3d8382a76788ad03dcbb0cb16721028e08c22a13a1ec0eec797ff0bffb334f930e2b92ed929814d14458e501bd20cbad82012088a91415d6bdfc2cd8d245ac6afe8c24385bd4155b2f778768".to_string(),
-//             ]),
-//             is_coinbase: false,
-//             sequence: 4294967295,
-//             inner_redeemscript_asm: None,
-//         },
-//         // Second input (no second input provided in the new transaction)
-//     ],
-//     vout: vec![
-//         Output {
-//             scriptpubkey: "51208ba512ebc3df0512af9048f74c20694a4aae4b8d7e2d55a906d54ffac6348c30".to_string(),
-//             scriptpubkey_asm: "OP_PUSHNUM_1 OP_PUSHBYTES_32 8ba512ebc3df0512af9048f74c20694a4aae4b8d7e2d55a906d54ffac6348c30".to_string(),
-//             scriptpubkey_type: "v1_p2tr".to_string(),
-//             scriptpubkey_address: Some("bc1p3wj3967rmuz39tusfrm5cgrfff92ujud0ck4t2gx648l43353scq2m6emr".to_string()),
-//             value: 5000,
-//         },
-//         // Second output (no second output provided in the new transaction)
-//     ]
-// };

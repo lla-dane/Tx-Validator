@@ -1,5 +1,4 @@
-use std::{cmp::Reverse, fs};
-
+use std::fs;
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
@@ -9,9 +8,8 @@ pub fn double_sha256(data: &[u8]) -> Vec<u8> {
     Sha256::digest(&Sha256::digest(data)).to_vec()
 }
 
+// ITERATE THROUGH THE VALID-MEMPOOL TO CREATE A VECTOR OF FEATURES TO BE USED FOR EACH TRANSACTION IN BLOCK MINING
 pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u64)>> {
-    // let path = Path::new("./valid-mempool");
-    // clear_directory(path)?;
 
     let v_mempool_dir = "./valid-mempool";
     let mut map: Vec<(String, Transaction, String, usize, u64)> = Vec::new();
@@ -58,6 +56,7 @@ pub fn create_txid_tx_map() -> Result<Vec<(String, Transaction, String, usize, u
     Ok(map)
 }
 
+// AIMS TO CREATE THE RAW TX FOR TXID AND RAW WTX FOR WTXID 
 fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)> {
     let tx_type;
     if tx.vin[0].witness == None {
@@ -266,6 +265,7 @@ fn serialise_tx(tx: &Transaction) -> Result<(bool, Vec<u8>, Vec<u8>, usize, u64)
     Ok((true, raw_tx, raw_wtx, tx_weight, fees))
 }
 
+// TO TEST MY CODE DURING DEVELOPMENT
 #[cfg(test)]
 mod test {
     use std::fs;
@@ -277,10 +277,8 @@ mod test {
         let path =
             "./mempool/fcc4d2ad88b7a040dc98ae29946b794258ae7c8ba1a4300a6fc761d0c9cb6a1f.json";
 
-        // Read the JSON file
         let data = fs::read_to_string(path).expect("Unable to read file");
 
-        // Deserialize JSON into Rust data structures
         let transaction: Transaction = serde_json::from_str(&data)?;
 
         let (_, tx, wtx, _, _) = serialise_tx(&transaction)?;
@@ -290,32 +288,4 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn test1() -> Result<()> {
-        let map = create_txid_tx_map()?;
-        let mut total_weight = 0;
-
-        for (_, _, _, weight, _) in map {
-            // println!("{}", weight);
-            total_weight += weight;
-        }
-        // println!("{}", total_weight);
-
-        Ok(())
-    }
-
-    #[test]
-    fn test5() -> Result<()> {
-        let v_mempool_dir = "./valid-mempool";
-
-        for entry in WalkDir::new(v_mempool_dir)
-            .into_iter()
-            .filter_map(|e| e.ok())
-        {
-            let path = entry.path();
-            // println!("{}", path.display().to_string());
-        }
-
-        Ok(())
-    }
 }

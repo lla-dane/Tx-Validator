@@ -12,8 +12,8 @@ use walkdir::WalkDir;
 use crate::{error::Result, transaction::Transaction};
 
 use self::{
-    p2pkh::input_verification_p2pkh, p2sh::input_verification_p2sh,
-    p2wpkh::input_verification_p2wpkh, p2wsh::input_verification_p2wsh,
+    p2pkh::input_verification_p2pkh, p2wpkh::input_verification_p2wpkh,
+    p2wsh::input_verification_p2wsh,
 };
 
 pub mod p2pkh;
@@ -21,41 +21,41 @@ pub mod p2sh;
 pub mod p2wpkh;
 pub mod p2wsh;
 
+// HASH160
 pub fn hash160(data: &[u8]) -> Vec<u8> {
     Ripemd160::digest(&Sha256::digest(data)).to_vec()
 }
 
+// HASH256
 pub fn double_sha256(data: &[u8]) -> Vec<u8> {
     Sha256::digest(&Sha256::digest(data)).to_vec()
 }
 
+// SHA256
 pub fn single_sha256(data: &[u8]) -> Vec<u8> {
     Sha256::digest(data).to_vec()
 }
 
+// OPCHECKSIG OPCODE IMPLEMENTATION
 pub fn op_checksig(
     stack: &mut Vec<Vec<u8>>,
     tx: Transaction,
     tx_input_index: usize,
     input_type: &str,
 ) -> Result<bool> {
+    // CREATE DUMMY PUBKEY AND SIGNATURES INCASE THEIR FORMAT IS NOT AS EXPECTED
+
     let dummy_pubkey: PublicKey = PublicKey::from_slice(
         &hex::decode("03bf68f1ce783df58a2459d549d5c655a1edc0f0cf4d79421fe978d358d79ee42a").unwrap(),
     )
     .unwrap();
-
     let dummy_signature: Signature = Signature::from_der(&hex::decode("304402205112f96bf7423703c221976603307f0e33913d39efc3344d68376fd2b8c0bd20022003ea588c06fa1a3e262e07ed6bf01a36f78741fe7bc6a91ff43c38a0a14e43fe").unwrap()).unwrap();
 
     // POP THE PUBLIC KEY FROM THE STACK
 
     let pubkey_bytes = stack.pop().unwrap();
-
     let pubkey = PublicKey::from_slice(&pubkey_bytes).unwrap_or(dummy_pubkey);
-
     let signature_bytes = stack.pop().expect("STACK UNDERFLOW");
-
-    // println!("{:?}", pubkey_bytes);
-    // println!("{:?}", signature_bytes);
 
     let sig = Signature::from_der(&signature_bytes[..signature_bytes.len() - 1])
         .unwrap_or(dummy_signature);
@@ -66,10 +66,8 @@ pub fn op_checksig(
     let mut trimmed_tx = trimmed_tx(tx.clone(), tx_input_index, input_type, sighash_type.clone())?;
     trimmed_tx.extend(&sighash_type.to_le_bytes());
 
-    // println!("{}", hex::encode(trimmed_tx.clone()));
-
+    // HASH256 THE TRIMMED-TX AND THEN CREATE THE MESSAGE OBJECT
     let trimmed_tx_hash = double_sha256(&trimmed_tx);
-
     let msg = Message::from_digest_slice(&trimmed_tx_hash).expect("PARSING: FAILED");
 
     // VERIFYING THE SIGNATURE
@@ -77,22 +75,22 @@ pub fn op_checksig(
 
     let mut result: bool = false;
 
+    // ECDSA VERIFICATION FUNCTION
     if secp.verify_ecdsa(&msg, &sig, &pubkey).is_ok() {
         result = true;
-        // println!("OP_CHECKSIG: SUCCESSFULL");
-    } else {
-        // println!("OP_CHECKSIG: FAILED")
     }
-
     Ok(result)
 }
 
+// OPMULTICHECKSIG OPCODE IMPLEMENTATION
 pub fn op_checkmultisig(
     stack: &mut Vec<Vec<u8>>,
     tx: Transaction,
     tx_input_index: usize,
     input_type: &str,
 ) -> Result<bool> {
+    // CREATE DUMMY PUBKEY AND SIGNATURES INCASE THEIR FORMAT IS NOT AS EXPECTED
+
     let dummy_pubkey: PublicKey = PublicKey::from_slice(
         &hex::decode("03bf68f1ce783df58a2459d549d5c655a1edc0f0cf4d79421fe978d358d79ee42a").unwrap(),
     )
@@ -108,6 +106,7 @@ pub fn op_checkmultisig(
         }
     }
 
+    // EXTRACT THE PUBKEYS AND SIGNATURES FROM THE STACK
     let mut pubkeys: Vec<PublicKey> = Vec::new();
 
     for _ in 0..n_keys {
@@ -140,14 +139,10 @@ pub fn op_checkmultisig(
     let secp = Secp256k1::new();
     let mut valid_sig_count = 0;
 
-    let mut x: String = String::new();
-
     for (sig, sighash) in signatures {
         // TRIM THE TRANSACTION AS PER THE SIGHASH_TYPE
         let mut trimmed_tx = trimmed_tx(tx.clone(), tx_input_index, input_type, sighash.clone())?;
         trimmed_tx.extend(&sighash.to_le_bytes());
-
-        x = hex::encode(trimmed_tx.clone());
 
         let trimmed_tx_hash = double_sha256(&trimmed_tx);
         let msg = Message::from_digest_slice(&trimmed_tx_hash).expect("PARSING: FAILED");
@@ -159,23 +154,15 @@ pub fn op_checkmultisig(
             }
         }
     }
-
-    // println!("{}", x);
-
-    let result;
+    let mut result: bool = false;
 
     if valid_sig_count == n_signatures {
-        // println!("OP_MULTICHECKSIG: SUCCESSFULL");
         result = true;
-    } else {
-        // println!("OP_MULTICHECKSIG: FAILED");
-        // println!("{}", valid_sig_count);
-        result = false;
     }
-
     Ok(result)
 }
 
+// FUNCION TO CREATE SERIALISED TRIMMED TXS AS PER THE SCRIPT TYPE FOR SIGHASH_ALL
 pub fn trimmed_tx(
     tx: Transaction,
     tx_input_index: usize,
@@ -184,7 +171,9 @@ pub fn trimmed_tx(
 ) -> Result<Vec<u8>> {
     let mut trimmed_tx: Vec<u8> = Vec::new();
 
+    // FOR SIGHASH_ALL
     if sighash_type == 01 {
+        // FOR LEGACY TXS
         if input_type == "NON_SEGWIT" {
             trimmed_tx.extend(&tx.version.to_le_bytes());
 
@@ -240,6 +229,7 @@ pub fn trimmed_tx(
             trimmed_tx.extend(&tx.locktime.to_le_bytes());
         }
 
+        // FOR SEGWIT_TXS
         if input_type == "P2SH-P2WPKH" {
             trimmed_tx.extend(&tx.version.to_le_bytes());
 
@@ -536,16 +526,11 @@ pub fn trimmed_tx(
             // PUSHING THE LOCKTIME
             trimmed_tx.extend(tx.locktime.to_le_bytes());
         }
-    } else {
-        // println!("NEW SIGHASH FOUND: {}", sighash_type);
-        // println!("txid: {:?}", tx.vin[0].txid);
     }
-
-    // TRASNSACTION BYTE SEQUENCE READY
-
     Ok(trimmed_tx)
 }
 
+// FINAL VERIFICATION FUNCTION WHICH DIRECTS TXS AS PER THEIR SCRIPT TYPE
 pub fn verify_tx(tx: Transaction) -> Result<bool> {
     let _p2pkh = "p2pkh".to_string();
     let _p2sh = "p2sh".to_string();
@@ -558,7 +543,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
 
     // GAS FEES CHECK
     if gas_fees_check(&tx) != true {
-        // println!("TRANSACTION INVALID: LOW GAS FEES");
         return Ok(false);
     }
 
@@ -572,14 +556,12 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2pkh(tx.clone(), input_index) {
                 Ok(false) => {
-                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
                 Ok(true) => {
                     v_result = true;
                 }
                 Err(_) => {
-                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
             }
@@ -595,7 +577,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //     for input_index in 0..tx.vin.len() {
     //         match input_verification_p2sh(input_index, tx.clone()) {
     //             Ok(false) => {
-    //                 // println!("TRASNACTION: INVALID");
     //                 return Ok(false);
     //             }
 
@@ -604,7 +585,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     //             }
 
     //             Err(_) => {
-    //                 // println!("TRASNACTION: INVALID");
     //                 return Ok(false);
     //             }
     //         }
@@ -614,7 +594,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2wpkh(input_index, tx.clone()) {
                 Ok(false) => {
-                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
 
@@ -623,7 +602,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                 }
 
                 Err(_) => {
-                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
             }
@@ -633,7 +611,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
         for input_index in 0..tx.vin.len() {
             match input_verification_p2wsh(input_index, tx.clone()) {
                 Ok(false) => {
-                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
 
@@ -642,7 +619,6 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
                 }
 
                 Err(_) => {
-                    // println!("TRASNACTION: INVALID");
                     return Ok(false);
                 }
             }
@@ -667,6 +643,7 @@ pub fn verify_tx(tx: Transaction) -> Result<bool> {
     Ok(v_result)
 }
 
+// REJECTS TXS IF GAS FEES IS LESS THAN 1500
 fn gas_fees_check(tx: &Transaction) -> bool {
     let mut s_sats: u64 = 0;
     let mut r_sats: u64 = 0;
@@ -692,72 +669,55 @@ fn gas_fees_check(tx: &Transaction) -> bool {
     }
 }
 
+// ITERATES THROUGH THE WHOLE MEMPOOL AND PUTS THE VALID TRANSACTIONS IN THE VALID-MEMPOOL FOLDER
 pub fn all_transaction_verification() -> Result<()> {
-    // let mut s_count = 0;
-    // let mut f_count = 0;
-    // let mut d_spends = 0;
     let mempool_dir = "./mempool";
+
+    // THIS HASH-MAP WILL BE USED TO REJECT DOUBLE SPENDS
     let mut spends: HashMap<String, String> = HashMap::new();
+
+    // ITERATE THROUGH THE DIRECTORY
     'outer: for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
         if path.is_file() {
             match fs::read_to_string(path) {
-                Ok(contents) => {
-                    match serde_json::from_str::<Transaction>(&contents) {
-                        Ok(transaction) => {
-                            // Check if all inputs' prevout scriptpubkey_type are .p2sh
-                            let all_p2sh = true;
-                            if all_p2sh {
-                                for input in &transaction.vin {
-                                    let input_key = format!("{}{}", input.txid, input.vout);
-                                    match spends.get(&input_key) {
-                                        Some(existing_txid)
-                                            if path.display().to_string() != *existing_txid =>
-                                        {
-                                            // d_spends += 1;
-                                            continue 'outer;
-                                        }
-                                        _ => {
-                                            spends.insert(input_key, path.display().to_string());
-                                        }
-                                    }
+                Ok(contents) => match serde_json::from_str::<Transaction>(&contents) {
+                    Ok(transaction) => {
+                        for input in &transaction.vin {
+                            let input_key = format!("{}{}", input.txid, input.vout);
+
+                            // CHECKS IF THE TXID IS ALREADY INN THE HASH-MAP
+                            match spends.get(&input_key) {
+                                Some(existing_txid)
+                                    if path.display().to_string() != *existing_txid =>
+                                {
+                                    continue 'outer;
                                 }
-
-                                let result = verify_tx(transaction)?;
-
-                                if result == true {
-                                    // s_count += 1;
-                                    // println!("SUCCESSFULL");
-                                    if let Some(filename) = path.file_name() {
-                                        let valid_mempool_dir = Path::new("./valid-mempool");
-                                        let destination_path = valid_mempool_dir.join(filename);
-                                        fs::copy(&path, &destination_path)?;
-                                    }
-                                } else {
-                                    // f_count += 1;
-                                    // println!("FAILED");
+                                _ => {
+                                    spends.insert(input_key, path.display().to_string());
                                 }
-
-                                // println!("\n\n");
                             }
                         }
-                        Err(_e) => {
-                            // println!("Failed to parse JSON: {}", e);
+                        // VERIFIES THE TX
+                        let result = verify_tx(transaction)?;
+                        if result == true {
+                            if let Some(filename) = path.file_name() {
+                                let valid_mempool_dir = Path::new("./valid-mempool");
+                                let destination_path = valid_mempool_dir.join(filename);
+                                fs::copy(&path, &destination_path)?;
+                            }
                         }
                     }
-                }
+                    Err(_e) => {}
+                },
                 Err(_e) => {}
             }
         }
     }
-
-    // println!("success: {}", s_count);
-    // println!("failure: {}", f_count);
-    // println!("doubles: {}", d_spends);
-
     Ok(())
 }
 
+// TO TEST MY CODE DURING DEVELOPMENT
 #[cfg(test)]
 mod test {
     use std::{collections::HashMap, fs, path::Path};
@@ -768,10 +728,7 @@ mod test {
 
     #[test]
     fn test_all_transaction_verification() -> Result<()> {
-        // let mut s_count = 0;
-        // let mut f_count = 0;
-        // let mut d_spends = 0;
-        let mempool_dir = "./mempool2";
+        let mempool_dir = "./mempool";
         let mut spends: HashMap<String, String> = HashMap::new();
         'outer: for entry in WalkDir::new(mempool_dir).into_iter().filter_map(|e| e.ok()) {
             let path = entry.path();
@@ -802,32 +759,22 @@ mod test {
                                     let result = verify_tx(transaction)?;
 
                                     if result == true {
-                                        // s_count += 1;
                                         if let Some(filename) = path.file_name() {
                                             let valid_mempool_dir = Path::new("./valid-mempool");
                                             let destination_path = valid_mempool_dir.join(filename);
                                             fs::copy(&path, &destination_path)?;
                                         }
                                     } else {
-                                        // f_count += 1;
                                     }
-
-                                    // println!("\n\n");
                                 }
                             }
-                            Err(_e) => {
-                                // println!("Failed to parse JSON: {}", e);
-                            }
+                            Err(_e) => {}
                         }
                     }
                     Err(_e) => {}
                 }
             }
         }
-
-        // println!("success: {}", s_count);
-        // println!("failure: {}", f_count);
-        // println!("doubles: {}", d_spends);
 
         Ok(())
     }

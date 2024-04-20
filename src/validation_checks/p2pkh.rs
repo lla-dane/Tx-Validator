@@ -1,4 +1,4 @@
-// Here we will operaeton the p2pkh transactions
+// OPERATE ON THE P2PKH TRANSACTIONS 
 use hex;
 use ripemd::Ripemd160;
 use secp256k1::{ecdsa::Signature, Message, PublicKey, Secp256k1};
@@ -8,12 +8,11 @@ use crate::error::Result;
 use crate::transaction::Transaction;
 
 pub fn input_verification_p2pkh(tx: Transaction, tx_input_index: usize) -> Result<bool> {
-    // get signature and public key from the scriptsig_asm
+    // EXTRACT THE SCRIPT PUB KEY ASM AND SCRIPT-SIG ASM FROM THE INPUT
 
     let scriptsig_asm = match tx.vin[tx_input_index].scriptsig_asm.clone() {
         Some(value) => value,
         None => {
-            // println!("scriptsig_asm missing...!!");
             return Ok(false);
         }
     };
@@ -28,6 +27,7 @@ pub fn input_verification_p2pkh(tx: Transaction, tx_input_index: usize) -> Resul
     ))
 }
 
+// EXECUTE THE SCRIPT SIG ASM
 fn script_execution(
     scriptpubkey_asm: String,
     scriptsig_asm: String,
@@ -44,11 +44,14 @@ fn script_execution(
 
     let mut stack: Vec<Vec<u8>> = Vec::new();
 
+    // PUSH THE SIGNATURE AND PUBLIC IN THE STACK
+
     stack.push(sig);
     stack.push(pubkey);
 
     let op_codes: Vec<&str> = scriptpubkey_asm.split_whitespace().collect();
 
+    // LOGIC IMPLEMENTATION OF THE OPCODES THAT COME IN THE PATH 
     for op_code in op_codes.iter() {
         match *op_code {
             "OP_DUP" => {
@@ -73,24 +76,20 @@ fn script_execution(
                     let b = stack.pop().expect("STACK UNDERFLOW: OP_EQUALVERIFY");
 
                     if a != b {
-                        // println!("OP_EQUALVERIFY: FAILED");
                         return false;
                     }
                 } else if *op_code == "OP_CHECKSIG" {
-                    // ASSUMING SIG IS CORRECT
                     let result = op_checksig(&tx, tx_input_index);
 
                     if result == true {
                         continue;
                     } else {
-                        // println!("OP_CHECKSIG: FAILED");
                         return false;
                     }
                 }
             }
         }
     }
-    // println!("SCRIPT EXECUTION: SUCCESSFULL");
     true
 }
 
@@ -102,6 +101,7 @@ fn double_sha256(data: &[u8]) -> Vec<u8> {
     Sha256::digest(&Sha256::digest(data)).to_vec()
 }
 
+// OPCHECK_SIG OPERATION AND TRIMMED TX CREATION FOR P2PKH 
 fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
     let mut trimmed_tx = Vec::new();
 
@@ -162,10 +162,6 @@ fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
     let signature = scriptsig_asm_slices[1];
     let pubkey = scriptsig_asm_slices[3];
 
-    // println!("{}", hex::encode(trimmed_tx.clone()));
-
-    // println!("{}", hex::encode(trimmed_tx.clone()));
-
     let trimmed_tx_hash = double_sha256(&trimmed_tx);
     let signature_bytes = hex::decode(signature).expect("DECODING: FAILED");
     let pubkey_bytes = hex::decode(pubkey).expect("DECODING: FAILED");
@@ -177,18 +173,15 @@ fn op_checksig(tx: &Transaction, tx_input_index: usize) -> bool {
     let message =
         Message::from_digest_slice(&trimmed_tx_hash).expect("ERROR CREATING MESSAGE FROM TX_HASH");
 
-    // println!("{}", message);
-    // println!("{}", signature);
-
     match secp.verify_ecdsa(&message, &signature, &public_key) {
         Ok(_) => {
-            // println!("SIGNATURE: VALID");
             return true;
         }
         Err(_) => return false,
     }
 }
 
+// EXTRACTS THE SIGHASH TYPE FROM THE LAST OF THE SIGNATURE
 fn extract_sighash_type(scriptsig_asm: String) -> Option<u32> {
     let scriptsig_slices: Vec<&str> = scriptsig_asm.split_whitespace().collect();
     let signature = scriptsig_slices[1];
@@ -198,6 +191,7 @@ fn extract_sighash_type(scriptsig_asm: String) -> Option<u32> {
     Some(sighash_type)
 }
 
+// TO TEST MY CODE DURING DEVELOPMENT
 #[cfg(test)]
 mod test {
     use std::fs;
@@ -218,7 +212,6 @@ mod test {
                     Ok(contents) => {
                         match serde_json::from_str::<Transaction>(&contents) {
                             Ok(transaction) => {
-                                // Check if all inputs' prevout scriptpubkey_type are .p2sh
                                 let all_p2sh = transaction.clone().vin.iter().all(|input| {
                                     input.prevout.scriptpubkey_type == "p2pkh".to_string()
                                 });
@@ -300,35 +293,3 @@ mod test {
     }
 }
 
-//         let dummy_tx: Transaction = Transaction {
-//     version: 2,
-//     locktime: 0,
-//     vin: vec![
-//         Input {
-//             txid: "f7268fdc3dd4ab2ce606a9857f321f9c9d94a7cc4ca7d31db481938ce222403e".to_string(),
-//             vout: 28,
-//             prevout: Prevout {
-//                 scriptpubkey: "76a9145ae0dedcb9a96b8d4310e4ff137a22e0233258e988ac".to_string(),
-//                 scriptpubkey_asm: "OP_DUP OP_HASH160 OP_PUSHBYTES_20 5ae0dedcb9a96b8d4310e4ff137a22e0233258e9 OP_EQUALVERIFY OP_CHECKSIG".to_string(),
-//                 scriptpubkey_type: "p2pkh".to_string(),
-//                 scriptpubkey_address: "19HXCYbrynpvTMYkQoneBgo3xEnXPFDd4z".to_string(),
-//                 value: 150653
-//             },
-//             scriptsig: Some("483045022100cfa7d65576fafd8f827904a1292b55d234898c1e444cd2dfc05f5e15b6f69e4402200b7ea6a9e3da80ea771fe1170795adcbea88d67eb8d82828e85d4b5883b9f9a80121038e464810ac06e1a7589e58bd9050ff1fc4d4768f00aaeedb2d4b5c231ac8851d".to_string()),
-//             scriptsig_asm: Some("OP_PUSHBYTES_72 3045022100cfa7d65576fafd8f827904a1292b55d234898c1e444cd2dfc05f5e15b6f69e4402200b7ea6a9e3da80ea771fe1170795adcbea88d67eb8d82828e85d4b5883b9f9a801 OP_PUSHBYTES_33 038e464810ac06e1a7589e58bd9050ff1fc4d4768f00aaeedb2d4b5c231ac8851d".to_string()),
-//             witness: None,
-//             is_coinbase: false,
-//             sequence: 4294967293,
-//             inner_redeemscript_asm: None
-//         }
-//     ],
-//     vout: vec![
-//         Output {
-//             scriptpubkey: "0014bc2870381de4d706a92105419f0c3072e26532d1".to_string(),
-//             scriptpubkey_asm: "OP_0 OP_PUSHBYTES_20 bc2870381de4d706a92105419f0c3072e26532d1".to_string(),
-//             scriptpubkey_type: "v0_p2wpkh".to_string(),
-//             scriptpubkey_address: Some("bc1qhs58qwqauntsd2fpq4qe7rpswt3x2vk3krdvhh".to_string()),
-//             value: 147107
-//         }
-//     ]
-// };

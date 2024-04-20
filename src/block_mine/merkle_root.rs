@@ -1,11 +1,10 @@
-use std::{fs::File, io::Write};
-
 use crate::error::Result;
 
 use crate::transaction::Transaction;
 
 use super::serialise_tx::double_sha256;
 
+// RETURNS THE MERKEL ROOT, COINBASE TX, COINBASE TXID AND TXIDS TO BE INCLUDED IN THE BLOCK
 pub fn generate_roots(
     map: Vec<(String, Transaction, String, usize, u64)>,
 ) -> Result<(String, String, String, Vec<String>)> {
@@ -28,15 +27,7 @@ pub fn generate_roots(
         wtxids.push(wtxid);
     }
 
-    // let mut wtxid_file = File::create("./wtxids.txt")?;
-
-    // for wtxid in wtxids.clone() {
-    //     writeln!(wtxid_file, "{}", wtxid)?;
-    // }
-
     let witness_root_hash = merkel_root(wtxids)?;
-
-    // println!("{}", witness_root_hash);
 
     let (coinbase_tx, txid_coinbase_tx) = create_coinbase(witness_root_hash, block_subsidy)?;
 
@@ -52,6 +43,7 @@ pub fn generate_roots(
     Ok((merkel_root, coinbase_tx, coinbase_txid, txids))
 }
 
+// FUNCTION TO CREATE THE MERKEL ROOT FOR A VECTOR OF TXIDS
 fn merkel_root(txids: Vec<String>) -> Result<String> {
     let mut txids_natural: Vec<String> = Vec::new();
 
@@ -62,12 +54,10 @@ fn merkel_root(txids: Vec<String>) -> Result<String> {
         txids_natural.push(hex::encode(txid_bytes));
     }
 
-    // println!("{:?}", txids_natural);
-
     while txids_natural.len() > 1 {
         let mut next_level = Vec::new();
 
-        // If odd number of txids_natural, duplicate the last one
+        // IF ODD NUMBER OF TXID, DUPLICATE THE LAST ONE 
         if txids_natural.len() % 2 != 0 {
             txids_natural.push(txids_natural.last().unwrap().clone());
         }
@@ -88,6 +78,7 @@ fn merkel_root(txids: Vec<String>) -> Result<String> {
     Ok(txids_natural[0].clone())
 }
 
+// CREATE THE COINBASE TX AND COINBASE TXID
 pub fn create_coinbase(witness_root_hash: String, block_subsidy: u64) -> Result<(String, String)> {
     let mut coinbase_tx = String::new();
     let mut txid_coinbase_tx = String::new();
@@ -169,6 +160,7 @@ pub fn create_coinbase(witness_root_hash: String, block_subsidy: u64) -> Result<
     Ok((coinbase_tx, txid_coinbase_tx))
 }
 
+// TO TEST MY CODE DURING DEVELOPMENT
 #[cfg(test)]
 
 mod test {

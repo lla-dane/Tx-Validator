@@ -11,10 +11,12 @@ use crate::block_mine::block::valid_block_header;
 
 fn main() -> Result<()> {
     
+    // TRANSACTION VERIFICATION FUNCTION
     all_transaction_verification()?;
 
     println!("TRANSACTION VERIFICATION: COMPLETED");
 
+    // BLOCK MINING
     valid_block_header()?;
 
     Ok(())
