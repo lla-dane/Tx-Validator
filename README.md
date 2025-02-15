@@ -1,67 +1,162 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/bWLxfecg)
 # Summer of Bitcoin 2024: Mine your first block
 
 ## Overview
+
 In this challenge, you are tasked with the simulation of mining process of a block, which includes validating and including transactions from a given set of transactions.
-The repository contains a folder `mempool` which contains JSON files. 
+The repository contains a folder `mempool` which contains JSON files.
 These files represent individual transactions, some of which may be invalid. Your goal is to successfully mine a block by including only the valid transactions, following the specific requirements outlined below.
 
 ## Objective
+
 Your primary objective is to write a script that processes a series of transactions, validates them, and then mines them into a block. The output of your script should be a file named `output.txt` that follows a specific format.
 
 ## Requirements
+
 ### Input
+
 - You are provided with a folder named `mempool` containing several JSON files. Each file represents a transaction that includes all necessary information for validation.
 - Among these transactions, some are invalid. Your script should be able to discern valid transactions from invalid ones.
 
 ### Output
+
 Your script must generate an output file named `output.txt` with the following structure:
+
 - First line: The block header.
 - Second line: The serialized coinbase transaction.
 - Following lines: The transaction IDs (txids) of the transactions mined in the block, in order. The first txid should be that of the coinbase transaction
 
 ### Difficulty Target
+
 The difficulty target is `0000ffff00000000000000000000000000000000000000000000000000000000`. This is the value that the block hash must be less than for the block to be successfully mined.
 
-## Execution
-- Create a file named `run.sh` that contains the command to execute your script. This file should ideally contain a single command like `python main.py` or `node index.js`.
-- Your script should autonomously perform all tasks when `run.sh` is executed, without requiring any manual intervention.
+## SOLUTION :
 
-## Evaluation Criteria
-Your submission will be evaluated based on the following criteria:
+### DESIGN APPROACH:
 
-- **Score**: Your code output will be scored bases on the fee collected and the amount of available block space utilised. **You must score at least 60 points to pass the challenge.**
-- **Correctness**: The `output.txt` file must be correctly formatted in the manner described above.
-- **Code Quality**: Your code should be well-organized, commented, and follow best practices.
-- **Efficiency**: Your solution should process transactions and mine the block efficiently.
+1. At first the mempool is itreated and transactions are verified on the basis of their script types (`p2tr` transactions are added in block with only basic checks like sufficient gas-fees)
+   and inserted in the valid-mempool.
+2. Transactions with gas fees less than 1500 sats are rejected.
+3. Then a map of all valid-transaction which includes `txid`, `transaction`, `wtxid`, `tx_weight` and `fees` is created for each of them.
+4. Then the wtxid commintment is created from all the wtxids of the valid transactions as mentioned in learn me a bitcoin.
+5. Then the coinbase transaction is hard-coded.
+6. Then the merkel root is created using the txids of all valid transactions withtthe txid if coinbase at the top.
+7. Then a valid-block-header is created by implementing the POW algorithm by continuously increasing the nonce once on each failure.
+8. Finally the valid-block header is created and, coinbase tx and all txids are inserted in the output.txt.
 
-## Document your work
+### IMPLEMENTATION DETAILS:
 
-Apart from the code, you must also publish a `SOLUTION.md` file explaining your solution in the following format:
-- **Design Approach:** Describe the approach you took to design your block construction program, explain all the key concepts of creating a valid block.
-- **Implementation Details:** Provide pseudo code of your implementation, including sequence of logic, algorithms and variables used etc.
-- **Results and Performance:** Present the results of your solution, and analyze the efficiency of your solution.
-- **Conclusion:** Discuss any insights gained from solving the problem, and outline potential areas for future improvement or research. Include a list of references or resources consulted during the problem-solving process.
+#### CODEBASE ARCHITECTURE
 
-## What NOT to Do
+The code is divided into two main parts `block_mine` and `validation_checks`.
 
-In this challenge, it's crucial to understand and adhere to the following restrictions. These are put in place to ensure that you engage with the core concepts of bitcoin and apply your problem-solving skills to implement the solution from first principles.
+#### VALIDATION_CHECKS
 
-- **Do Not Use Bitcoin Libraries for Transaction Validation:** You must not use any Bitcoin-specific libraries or frameworks that automate transaction validation processes. The intent of this challenge is for you to understand and implement the validation logic manually.
-- **Permissible Libraries:** The use of standard cryptographic libraries, such as secp256k1 for elliptic curve cryptography, and standard hashing libraries (e.g., for SHA-256) is allowed and encouraged. These libraries are essential for implementing the cryptographic underpinnings of bitcoin without reinventing the wheel.
- - **Implement the Mining Algorithm Yourself:** You are required to implement the mining algorithm on your own. This includes creating a way to correctly form a block header, calculate the hash, and meet the challenge of finding a hash below a certain target.
+The core verification logic of `p2pkh`, `p2sh`, `p2wpkh`, `p2wsh` transactions are implemented here.
 
-### Plagiarism Policy:
-Our plagiarism detection checker thoroughly identifies any instances of copying or cheating. Participants are required to publish their solutions in the designated repository, which is private and accessible only to the individual and the administrator. Solutions should not be shared publicly or with peers. In case of plagiarism, both parties involved will be directly disqualified to maintain fairness and integrity.
+##### P2PKH VERIFICATION:
 
-### AI Usage Disclaimer:
-You may use AI tools like ChatGPT to gather information and explore alternative approaches, but avoid relying solely on AI for complete solutions. Verify and validate any insights obtained and maintain a balance between AI assistance and independent problem-solving.
+1. In `input_verification_p2pkh`, the script_sig_asm and script_pubkey_asm are extracted from the input of the transaction being verified and then
+   passed `script_execution`
+2. `HASH160` of `Public key` in `script_sig_asm` is verified with `pubkeyhash` in the script_pub_key
+3. Now the `signature` and `public_key` are pushed in the stack and the opcodes in the script_sig_asm are executed in sequence.
+4. The `verify_ecdsa` function is then used to verify the signature against the pubic key and the message created from the transaction as per the consensus rules.
+5. I refered to [this](https://github.com/LivioZ/P2PKH-Bitcoin-tx-verifier?tab=readme-ov-file) repository for `trimmed_tx` creation for signature verification.
 
-## Why These Restrictions?
-These restrictions are designed to deepen your understanding of bitcoin technicals.
-By completing this assignment, you will gain hands-on experience with the technology that make bitcoin secure and trustless.
-Remember, the goal of this challenge is not just to produce a working solution but to engage critically with the fundamental components of bitcoin. This is an opportunity to showcase your problem-solving skills and your ability to implement complex algorithms from scratch.
+##### P2SH VERIFICATION:
 
-## Additional Information
-- This challenge is designed to test your understanding of bitcoin fundamentals, including transaction validation and block mining processes.
-- While the challenge focuses on the simulation of these processes, you are encouraged to implement your solution in a way that demonstrates depth of understanding and creativity.
+There are 3 types of p2sh transactions: `native p2sh`, `p2sh-p2wpkh`, `p2sh-p2wsh`
+
+###### LEGACY P2SH:
+
+1. The scripts are executed in a stack.
+2. Sequence of script execution: `script_sig`, `script_pub_key`, `inner_redeem_script`.
+3. The logic for all opcodes present in scripts are implemented in `p2sh.rs`
+4. The `trimmed_tx` creation is same as the `p2pkh` just instead of `script_sig_asm`, `inner_redeem_script` is used.
+
+###### P2SH-P2WPKH:
+
+1. Scripts are executed in the stack.
+2. All relevant `opcodes` logic implementation are in `p2sh.rs`.
+3. `script_sig` and `script_pub_key` are executed in the same way.
+4. Here instead of `inner_redeem_script`, witness is executed.
+5. `signature` and `public key` are pushed in the stack.
+6. Now `OP_DUP`, `OP_HASH160` are executed implicitely.All relevant `opcodes` logic implementation are in `p2sh.rs`.
+7. Now `inner_redeem_script` opcodes are executed.
+8. Again `OP_EQUALVERIFY` and `OP_CHECKSIG` are excuted implicitely.
+
+###### P2SH-P2WSH:
+
+1. Scripts are executed in the stack.
+2. All relevant `opcodes` logic implementation are in `p2sh.rs`.
+3. `script_sig` and `script_pub_key` are executed in the same way.
+4. Here also instead of `inner_redeem_script`, witness is executed.
+5. All the elements except the last element in the `witness` are pushed in the stack.
+6. Now the `witness-script` is executed which is the last element in the witness.
+7. Each opcode is iterated and executed, the final result is procured.
+
+`SIGNATURE` verification for segwit `p2sh` transactions are refrenced from [BIP143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki).
+
+##### P2WPKH:
+
+1. This verification is not implemented using stack.
+2. The `signature` and `public key` are extracted from the witness as there are only two elements in all `p2wpkh` transactions.
+3. `HASH160` of `public key` is verified against the `pubkeyhash` in `script_pub_key`.
+4. Now the `signature` is verified against the `message` and `public key` using `verify_ecdsa` function.
+
+##### P2WSH:
+
+1. Scripts are executed in the stack.
+2. All relevant `opcodes` logic implementation are in `p2wsh.rs`.
+3. All elements in the `witness` except the last element which is the `witness script` are pushed in the stack.
+4. Now the `witness-program` which is the last element is the `script_pub_key` is cross-verified with the `SHA256` of `witness-script`.
+5. Now after this verfication all the opcodes in the `witness-script` is executed in the sequence and the final result is procured.
+
+#### `mod.rs` in `validation_checks` contains:
+
+1. Logic of `OP_CHECKSIG` and `OP_MULTICHECKSIG`.
+2. `verify_tx` method which redirects transctions on the basis of their types.
+3. `all_transaction_verification` iterates through the mempool and executes `verify_tx` for each transaction while also checking for double spends.
+
+#### BLOCK MINE
+
+The core logic of block mining is implemented here.
+
+##### `serialise_tx.rs`
+
+1. The transactions which are valid under the consensus rules are put in the valid-mempool directory.
+2. Now in `create_txid_tx_map` the `valid-mempool` directory is iterated and each valid transaction is seriliased into raw transactions.
+3. Now as the transactions are iterated in the valid-mempool, their `txid`, `transaction`, `wtxid`, `tx_weight` and `fees`is insert in a vector in the descending order of their
+   `gas-fees`/`tx-weight`.
+4. Method to serialise a transaction into its raw transaction format is referenced from [learnmeabitcoin](https://learnmeabitcoin.com/).
+
+##### `merkle_root.rs`
+
+1. The `merkel_root` and `coinbase_transaction` logic is implemented here.
+
+##### `block.rs`
+
+1. Here a `valid_block_header` is created using POW against the block_header_hash and the target bits.
+
+At the end the `valid_block_header`, `raw coinbase_tx` , `txids` are inserted in the output.txt.
+
+### RESULTS AND PERFORMANCE:
+
+A valid block is created with:
+
+1. BLOCK WEIGHT := 3994072
+2. FEE := 21619204
+3. SCORE: 101
+4. NUMBER OF TRANSACTIONS: 4453
+
+Effieciency of my solution could have been improved from the following changes:
+
+1. Making a single `opcode` registry for all transaction types and not implementing the `opcode` logic in each tx verification file.
+2. Could not include `p2sh` transactions in `output.txt` because of some bugs at the last moment.
+
+### CONCLUSION:
+
+##### REFRENCES:
+
+1. Github repo - [p2pkh verification](https://github.com/LivioZ/P2PKH-Bitcoin-tx-verifier?tab=readme-ov-file)
+2. [BIP143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki) - for signature verification of segwit transactions.
+3. [Learn me a bitcoin](https://learnmeabitcoin.com/) - for block-header and coinbase transaction composition
